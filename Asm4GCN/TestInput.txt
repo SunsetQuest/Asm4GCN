@@ -1,0 +1,165 @@
+﻿// Examples of #defines (they support params)
+#DEFINE _cat_(opt0) bla opt0 bla
+#DEFINE _cat_(opt0,opt1) bla opt0 opt1 bla
+#DEFINE _cat_ bla bla bla
+#define _dog_ 7
+
+// Examples of an allowed reg pool (optional)
+#S_POOL s22,s23,s24,s27,s29,s30,s31,s33,s34,s35,s36,s37
+#V_POOL v11,v12,v13,v14,v15,v17,v19,v20,v21,v23,v24,v25
+
+// Examples of inputs
+#REF v8u Input1ArrayAddress v12
+#REF v8u Input2ArrayAddress v14
+#REF v8u Input0ArrayAddress v20
+#REF v4u Input9ArrayAddress v23
+#REF s8u Output2ArrayAddress s30
+#REF v4u Count v11
+
+// Examples of variables
+// register types are 3 digits
+// [s|v] [1|2|4|8] [f|i|u|b][#]
+//   [s|v]     - scalor or vector
+//   [1|2|4|8] - register size
+//   [f|i|u|b] - register format: 
+//     f - float 
+//     i - signed int 
+//     u - unsigned int 
+//     b - bits(or unspecified)
+
+s8i z			// scalar signed long long 
+s4u y			// scalar unsigned int
+v4f va, vb, vc	// vector float
+s4i c,d   e		// Can use tab or comma
+s4i a, b,		// comma at end is okay
+s_mov_b32 a,  3
+S_ADD_I32 a, a  ,  2 
+free a b;		// free up some of the vars
+s4u a b;		// test reuse
+
+
+// possible future friendly commands
+// v8u[2] aa
+// v8u bb = 5	// initialize value
+// add b, m, n	// auto detect add type
+// mem[b] = 99	// auto access reg
+// branch lbl1;	// easy branching
+
+
+// Test MUBUF
+BUFFER_STORE_FORMAT_XYZW	v1, v0, s[4:7], 0, offen, 0x4
+
+// Test MTBUF
+tbuffer_load_format_x  v1, v1, s[4:7], 0 offen format:[BUF_DATA_FORMAT_32,BUF_NUM_FORMAT_FLOAT] offset:4
+
+// Test MIMG
+IMAGE_LOAD	v12, v13, s[0:3], s[4:7] slc lwe tfe r128 da glc unorm DMASK:0xC
+
+// Test VOP3a
+V_LSHL_B64 v0 ABS(v1) NEG(v2) v[3:4] MUL(4.) clamp
+
+// Test DS
+ds_write_b32  v0, v2, v3, v0                   // D8340000 00000302 
+ds_write2_b32  v0, v16, v15, v17 offset1:1     // D8380100 00110F10
+
+// Test Multiple exprs on a single line
+S_ADD_I32	S3, S4, -255; S_ADD_I32	S3, S4, -255;	
+S_ADD_I32 S3, S4, -255 ;S_ADD_I32	S3, S4, -255;  // comments
+
+// Test comments
+/*
+S_ADD_I32	S3, S4, -255;			// Large neg. literal test
+S_ADD_I32	S3, S4, -255;	*/		// Large neg. literal test
+S_MIN_U32	S0, S0/*comment*/, 0x0000ffff;		
+
+// Test labels                    (Sz) lbl offset
+start:s_mov_b32 s15, @start		// (4) -4
+cat2: s_cbranch_scc0 @cat1		// (4) 0
+cat1: s_cbranch_scc1 @cat2		// (4)-8
+      S_CBRANCH_EXECNZ @dog		// (4) 0	
+dog:  S_CBRANCH_VCCNZ @cat1		// (4) -12  // if any(vcc) jump @cat
+      S_CBRANCH_VCCZ @cat1		// (4) -16  // if zero(vcc) jump @cat
+      S_CBRANCH_VCCNZ @end		// (4) 36
+      s_mov_b32 s15, @start		// (8) -32  (reg129–192 > Signed int 1 to 64; reg193–208 -> Signed int -1 to -16)
+      s_mov_b32 s15, @start		// (8) -40
+      s_mov_b32 s15, @start		// (8) -48
+      S_CBRANCH_VCCNZ @start	// (4) -44
+      v_mov_b32 v15, @start		// (8) -32
+end:
+
+// Special operand type tests;
+S_NOR_B64	S11, S12, VCC_LO;		// VCC_LO operand test
+S_NOR_B64	S13, VCC_HI, S13;		// VCC_HI operand test
+S_NOR_B64	S11, S12, TBA_LO;		// TBA_LO operand test
+S_NOR_B64	S13, TBA_HI, S13;		// TBA_HI operand test
+S_NOR_B64	S11, S12, TMA_LO;		// TMA_LO operand test
+S_NOR_B64	S13, TMA_HI, S13;		// TMA_HI operand test
+S_SUBB_U32	S16, t0, S17	;		// TTMP0 test
+S_SUBB_U32	S18, S19, t11	;		// TTMP11 test
+
+
+
+// Test parser for issues
+// Empty line test 1
+ // Empty line test 2;
+	// Empty line test 3
+// Empty line test 4 []{}*jk\/3!@#$%^&*()_-+=
+
+// VOP2 tests
+// <OP>  <VDST>[<VCC>]<SRC0><VSRC1>
+V_ADD_I32	v0, VCC, v0, v1			// 4A000300
+V_ADD_I32	v0, VCC, s1, v0			// 4A000001
+V_ADD_I32	v0, VCC, s0, v0			// 4A000000
+V_ADD_I32	v1, VCC, 0x00000063, v1	// 4A0202FF 00000063
+V_MAX_U32	v2, v3, v4
+V_MIN_I32	v5, s6, v7
+V_XOR_B32	v100, v101, v102
+V_OR_B32	v253, v254, v255
+
+// More examples with known microcode values
+V_LSHLREV_B32	v0, 2, v0			// 34000082
+V_MUL_I32_I24	v1, s12, v1			// 1202020C
+V_LSHLREV_B32	v2, 2, v4			// 34040882
+V_OR_B32		v4, 64, v1			// 380802C0 
+
+// SMRD test
+S_LOAD_DWordX4			S[16:19], S[2:3], S4    //C0880204(maybe?)
+S_LOAD_DWordX4			S[16:19], S[2:3], 0x00 // C0880300
+S_LOAD_DWordX4			S[20:23], S[2:3], 0x04 // C08A0304
+S_LOAD_DWordX4			S[0:3], S[2:3], 0x08   // C0800308
+S_BUFFER_LOAD_DWord		S13, S[16:19], 0x04	   // C2069104
+S_BUFFER_LOAD_DWord		S14, S[16:19], 0x18	   // C2071118
+S_BUFFER_LOAD_DWord		S15, S[20:23], 0x00	   // C2079500
+S_BUFFER_LOAD_DWord		S16, S[20:23], 0x08	   // C2081508
+S_NOP					0
+
+// Test v_interp_*  (two formats we can use)
+v_interp_mov_f32 v0, p0, attr0.x    // C8020002                 
+V_INTERP_P1_F32 v2, v0, 3, 0, [m0]  // C8080300	
+v_interp_p2_f32 v0, v0, attr31.y    // C8017D00		
+v_interp_mov_f32 v2, p0, 1, 0, [m0] // C80A0102	
+v_interp_p1_f32 v4, v0, 1, 0, [m0]  // C8100100	
+v_interp_p2_f32 v0, [v0], v1, attr0.x     // C8010001	
+// v_interp_p2_f32 v0, [v2], v1, attr0.x     // this should throw an error
+
+// Basic tests, testing core functionality, SOP2 format
+// <OP>  <SDST> <SSRC0> <SSRC1>
+S_MIN_U32	S0, S0, 0x0000ffff		
+S_ADD_I32	S3, S4, 255				// Large literal test
+S_ADD_I32	S3, S4, 12				// Small literal test
+S_ADD_I32	S3, S4, -255			// Large neg. literal test
+S_ADD_I32	S3, S4, -12				// Small neg. literal test
+S_MIN_U32	S5, S6, 0xABCD			// Hex literal 
+S_MIN_U32	S5, S6, 10E2			// Exp literal test
+S_MIN_U32	S5, S6, -10E2			// Neg Exp literal test
+s_min_u32	s7, 0xfedc, s8			// -case test
+S_MOV_B32	s4, 2.					// float test (inline)			
+S_MOV_B32	s4, -20.0				// float test (inline)
+S_MOV_B32	s4, .5					// float test (inline)
+S_MOV_B32	s4, -.5					// float test (inline)
+S_MOV_B32	s4, 343.432				// float test (literal)
+S_MOV_B32	s4, 3.4E4				// exp float test (literal)
+S_MOV_B32	s4, -34.4E-4			// exp float test (literal)
+S_MOV_B32	s4, 0o7654				// Octal Test (literal) (4000/FA0)
+S_MOV_B32	s4, 0b111110100000		// Binary Test (literal) (4000/FA0)
+S_MOV_B32	s4, 0b0011111111		// Binary Test (inline) (255/FF)

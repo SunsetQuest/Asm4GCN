@@ -1,0 +1,11 @@
+For security, it's often best to get(or generate) a dll directly from the author’s 
+site. I have included links to the source of all DLLs used in this project. 
+
+OpenCL.NET.dll - this project is used for an OpenCL wrapper.
+ -https://openclnet.codeplex.com/
+
+AutocompleteMenu.dll - this project was used for autocomplete.  The source code can be found here:
+ -http://www.codeproject.com/Articles/365974/Autocomplete-Menu
+
+FastColoredTextBox.dll - this project was used for the syntax highlighting textbox.  The source code can be found here:
+ -http://www.codeproject.com/Articles/161871/Fast-Colored-TextBox-for-syntax-highlighting
