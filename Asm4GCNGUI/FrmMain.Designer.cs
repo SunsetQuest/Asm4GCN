@@ -82,16 +82,30 @@
             this.findCtrlFToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findNextF3ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.replaceCtrlHToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.gotoNextCharAltFcharToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator5 = new System.Windows.Forms.ToolStripSeparator();
+            this.forwardNavigationShiftCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.backwardNavigationCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.gotoLineCtrlGToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.selectAllCtrlAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.increaseIndentShiftTabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.goToFirstCharOfWordCtrlHomeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.goToLastCharOfWordCtrlEndToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.backwardNavigationCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.forwardNavigationShiftCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.zoomCtrlWheelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
+            this.selectAllCtrlAToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.increaseIndentShiftTabToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cutCurrentLineShiftDelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
+            this.recordStopMacroCtrlMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.executeMacroCtrlEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
+            this.zoomInCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.zoomOutCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.zoom100Ctrl0ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.zoomCtrlWheelToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
+            this.addBookmarkCtrlBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.removeBookmarkCtrlShiftBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.nextBookmarkCtrlNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.prevBookmarkCtrlShiftNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.txtOutput = new FastColoredTextBoxNS.FastColoredTextBox();
             this.splitter1 = new System.Windows.Forms.Splitter();
             this.tabControl1 = new System.Windows.Forms.TabControl();
@@ -106,20 +120,6 @@
             this.imageList1 = new System.Windows.Forms.ImageList(this.components);
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.openFileDialog2 = new System.Windows.Forms.OpenFileDialog();
-            this.toolStripSeparator6 = new System.Windows.Forms.ToolStripSeparator();
-            this.toolStripSeparator7 = new System.Windows.Forms.ToolStripSeparator();
-            this.recordStopMacroCtrlMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.executeMacroCtrlEToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator8 = new System.Windows.Forms.ToolStripSeparator();
-            this.zoomInCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.zoomOutCtrlToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.zoom100Ctrl0ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.gotoNextCharAltFcharToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.addBookmarkCtrlBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.removeBookmarkCtrlShiftBToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.nextBookmarkCtrlNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.prevBookmarkCtrlShiftNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator9 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.txtOutput)).BeginInit();
             this.tabControl1.SuspendLayout();
@@ -131,9 +131,9 @@
             // 
             // statusStrip1
             // 
-            this.statusStrip1.Location = new System.Drawing.Point(0, 720);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 910);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(827, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(723, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -159,7 +159,7 @@
             this.toolStripDropDownButtonEditor});
             this.toolStrip1.Location = new System.Drawing.Point(108, -2);
             this.toolStrip1.Name = "toolStrip1";
-            this.toolStrip1.Size = new System.Drawing.Size(383, 25);
+            this.toolStrip1.Size = new System.Drawing.Size(414, 25);
             this.toolStrip1.TabIndex = 2;
             this.toolStrip1.Text = "toolStrip1";
             // 
@@ -461,10 +461,32 @@
             this.replaceCtrlHToolStripMenuItem.Text = "Replace (Ctrl-H)";
             this.replaceCtrlHToolStripMenuItem.Click += new System.EventHandler(this.replaceCtrlHToolStripMenuItem_Click);
             // 
+            // gotoNextCharAltFcharToolStripMenuItem
+            // 
+            this.gotoNextCharAltFcharToolStripMenuItem.Name = "gotoNextCharAltFcharToolStripMenuItem";
+            this.gotoNextCharAltFcharToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.gotoNextCharAltFcharToolStripMenuItem.Text = "Find Next Char (Alt-F, [char])";
+            // 
             // toolStripSeparator5
             // 
             this.toolStripSeparator5.Name = "toolStripSeparator5";
             this.toolStripSeparator5.Size = new System.Drawing.Size(268, 6);
+            // 
+            // forwardNavigationShiftCtrlToolStripMenuItem
+            // 
+            this.forwardNavigationShiftCtrlToolStripMenuItem.Name = "forwardNavigationShiftCtrlToolStripMenuItem";
+            this.forwardNavigationShiftCtrlToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.forwardNavigationShiftCtrlToolStripMenuItem.Tag = "^+-";
+            this.forwardNavigationShiftCtrlToolStripMenuItem.Text = "Forward Navigation (Shift+Ctrl-";
+            this.forwardNavigationShiftCtrlToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
+            // 
+            // backwardNavigationCtrlToolStripMenuItem
+            // 
+            this.backwardNavigationCtrlToolStripMenuItem.Name = "backwardNavigationCtrlToolStripMenuItem";
+            this.backwardNavigationCtrlToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.backwardNavigationCtrlToolStripMenuItem.Tag = "^-";
+            this.backwardNavigationCtrlToolStripMenuItem.Text = "Backward Navigation (Ctrl-)";
+            this.backwardNavigationCtrlToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
             // gotoLineCtrlGToolStripMenuItem
             // 
@@ -473,22 +495,6 @@
             this.gotoLineCtrlGToolStripMenuItem.Tag = "^g";
             this.gotoLineCtrlGToolStripMenuItem.Text = "Goto Line (Ctrl-G)";
             this.gotoLineCtrlGToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
-            // 
-            // selectAllCtrlAToolStripMenuItem
-            // 
-            this.selectAllCtrlAToolStripMenuItem.Name = "selectAllCtrlAToolStripMenuItem";
-            this.selectAllCtrlAToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.selectAllCtrlAToolStripMenuItem.Tag = "^a";
-            this.selectAllCtrlAToolStripMenuItem.Text = "Select All (Ctrl-A)";
-            this.selectAllCtrlAToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
-            // 
-            // increaseIndentShiftTabToolStripMenuItem
-            // 
-            this.increaseIndentShiftTabToolStripMenuItem.Name = "increaseIndentShiftTabToolStripMenuItem";
-            this.increaseIndentShiftTabToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.increaseIndentShiftTabToolStripMenuItem.Tag = "+{TAB}";
-            this.increaseIndentShiftTabToolStripMenuItem.Text = "Increase Indent (Shift-Tab)";
-            this.increaseIndentShiftTabToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
             // goToFirstCharOfWordCtrlHomeToolStripMenuItem
             // 
@@ -506,28 +512,26 @@
             this.goToLastCharOfWordCtrlEndToolStripMenuItem.Text = "Go To Last Char of word (Ctrl-End)";
             this.goToLastCharOfWordCtrlEndToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
-            // backwardNavigationCtrlToolStripMenuItem
+            // toolStripSeparator6
             // 
-            this.backwardNavigationCtrlToolStripMenuItem.Name = "backwardNavigationCtrlToolStripMenuItem";
-            this.backwardNavigationCtrlToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.backwardNavigationCtrlToolStripMenuItem.Tag = "^-";
-            this.backwardNavigationCtrlToolStripMenuItem.Text = "Backward Navigation (Ctrl-)";
-            this.backwardNavigationCtrlToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
+            this.toolStripSeparator6.Name = "toolStripSeparator6";
+            this.toolStripSeparator6.Size = new System.Drawing.Size(268, 6);
             // 
-            // forwardNavigationShiftCtrlToolStripMenuItem
+            // selectAllCtrlAToolStripMenuItem
             // 
-            this.forwardNavigationShiftCtrlToolStripMenuItem.Name = "forwardNavigationShiftCtrlToolStripMenuItem";
-            this.forwardNavigationShiftCtrlToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.forwardNavigationShiftCtrlToolStripMenuItem.Tag = "^+-";
-            this.forwardNavigationShiftCtrlToolStripMenuItem.Text = "Forward Navigation (Shift+Ctrl-";
-            this.forwardNavigationShiftCtrlToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
+            this.selectAllCtrlAToolStripMenuItem.Name = "selectAllCtrlAToolStripMenuItem";
+            this.selectAllCtrlAToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.selectAllCtrlAToolStripMenuItem.Tag = "^a";
+            this.selectAllCtrlAToolStripMenuItem.Text = "Select All (Ctrl-A)";
+            this.selectAllCtrlAToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
-            // zoomCtrlWheelToolStripMenuItem
+            // increaseIndentShiftTabToolStripMenuItem
             // 
-            this.zoomCtrlWheelToolStripMenuItem.Name = "zoomCtrlWheelToolStripMenuItem";
-            this.zoomCtrlWheelToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.zoomCtrlWheelToolStripMenuItem.Text = "Zoom (Ctrl-MouseWheel)";
-            this.zoomCtrlWheelToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
+            this.increaseIndentShiftTabToolStripMenuItem.Name = "increaseIndentShiftTabToolStripMenuItem";
+            this.increaseIndentShiftTabToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.increaseIndentShiftTabToolStripMenuItem.Tag = "+{TAB}";
+            this.increaseIndentShiftTabToolStripMenuItem.Text = "Increase Indent (Shift-Tab)";
+            this.increaseIndentShiftTabToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
             // cutCurrentLineShiftDelToolStripMenuItem
             // 
@@ -536,227 +540,6 @@
             this.cutCurrentLineShiftDelToolStripMenuItem.Tag = "+{DEL}";
             this.cutCurrentLineShiftDelToolStripMenuItem.Text = "Cut current line (Shift-Del)";
             this.cutCurrentLineShiftDelToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
-            // 
-            // txtOutput
-            // 
-            this.txtOutput.AutoCompleteBracketsList = new char[] {
-        '(',
-        ')',
-        '{',
-        '}',
-        '[',
-        ']',
-        '\"',
-        '\"',
-        '\'',
-        '\''};
-            this.autocompleteMenu1.SetAutocompleteMenu(this.txtOutput, null);
-            this.txtOutput.AutoScrollMinSize = new System.Drawing.Size(0, 14);
-            this.txtOutput.BackBrush = null;
-            this.txtOutput.CharHeight = 14;
-            this.txtOutput.CharWidth = 8;
-            this.txtOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this.txtOutput.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.txtOutput.IsReplaceMode = false;
-            this.txtOutput.Location = new System.Drawing.Point(0, 640);
-            this.txtOutput.Name = "txtOutput";
-            this.txtOutput.Paddings = new System.Windows.Forms.Padding(0);
-            this.txtOutput.ReadOnly = true;
-            this.txtOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
-            this.txtOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtOutput.ServiceColors")));
-            this.txtOutput.ShowLineNumbers = false;
-            this.txtOutput.Size = new System.Drawing.Size(827, 80);
-            this.txtOutput.TabIndex = 3;
-            this.txtOutput.WordWrap = true;
-            this.txtOutput.Zoom = 100;
-            this.txtOutput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtOutput_TextChanged);
-            this.txtOutput.Enter += new System.EventHandler(this.setUserControlAsCurrent);
-            // 
-            // splitter1
-            // 
-            this.splitter1.Cursor = System.Windows.Forms.Cursors.HSplit;
-            this.splitter1.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.splitter1.Location = new System.Drawing.Point(0, 630);
-            this.splitter1.Name = "splitter1";
-            this.splitter1.Size = new System.Drawing.Size(827, 10);
-            this.splitter1.TabIndex = 4;
-            this.splitter1.TabStop = false;
-            // 
-            // tabControl1
-            // 
-            this.tabControl1.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
-            this.tabControl1.Controls.Add(this.tabHost);
-            this.tabControl1.Controls.Add(this.tabGCN);
-            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tabControl1.Location = new System.Drawing.Point(0, 0);
-            this.tabControl1.Multiline = true;
-            this.tabControl1.Name = "tabControl1";
-            this.tabControl1.Padding = new System.Drawing.Point(6, 1);
-            this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(827, 630);
-            this.tabControl1.TabIndex = 5;
-            // 
-            // tabHost
-            // 
-            this.tabHost.Controls.Add(this.txtHost);
-            this.tabHost.Location = new System.Drawing.Point(4, 23);
-            this.tabHost.Name = "tabHost";
-            this.tabHost.Padding = new System.Windows.Forms.Padding(3);
-            this.tabHost.Size = new System.Drawing.Size(819, 603);
-            this.tabHost.TabIndex = 1;
-            this.tabHost.Text = "C# Host";
-            this.tabHost.UseVisualStyleBackColor = true;
-            // 
-            // txtHost
-            // 
-            this.txtHost.AutoCompleteBracketsList = new char[] {
-        '(',
-        ')',
-        '{',
-        '}',
-        '[',
-        ']',
-        '\"',
-        '\"',
-        '\'',
-        '\''};
-            this.autocompleteMenu1.SetAutocompleteMenu(this.txtHost, null);
-            this.txtHost.AutoIndentCharsPatterns = "\n^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;]+);\n^\\s*(case|default)\\s*[^:]*(" +
-    "?<range>:)\\s*(?<range>[^;]+);\n";
-            this.txtHost.AutoScrollMinSize = new System.Drawing.Size(787, 1428);
-            this.txtHost.BackBrush = null;
-            this.txtHost.BracketsHighlightStrategy = FastColoredTextBoxNS.BracketsHighlightStrategy.Strategy2;
-            this.txtHost.ChangedLineColor = System.Drawing.Color.Cornsilk;
-            this.txtHost.CharHeight = 14;
-            this.txtHost.CharWidth = 8;
-            this.txtHost.CurrentLineColor = System.Drawing.Color.LemonChiffon;
-            this.txtHost.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtHost.DelayedEventsInterval = 500;
-            this.txtHost.DelayedTextChangedInterval = 1000;
-            this.txtHost.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this.txtHost.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtHost.Font = new System.Drawing.Font("Courier New", 9.75F);
-            this.txtHost.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
-            this.txtHost.IsReplaceMode = false;
-            this.txtHost.Language = FastColoredTextBoxNS.Language.CSharp;
-            this.txtHost.LeftBracket = '(';
-            this.txtHost.LeftBracket2 = '{';
-            this.txtHost.Location = new System.Drawing.Point(3, 3);
-            this.txtHost.Name = "txtHost";
-            this.txtHost.Paddings = new System.Windows.Forms.Padding(0);
-            this.txtHost.RightBracket = ')';
-            this.txtHost.RightBracket2 = '}';
-            this.txtHost.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
-            this.txtHost.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtHost.ServiceColors")));
-            this.txtHost.ShowFoldingLines = true;
-            this.txtHost.Size = new System.Drawing.Size(813, 597);
-            this.txtHost.TabIndex = 2;
-            this.txtHost.Text = resources.GetString("txtHost.Text");
-            this.txtHost.Zoom = 100;
-            this.txtHost.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtHost_TextChanged);
-            this.txtHost.Enter += new System.EventHandler(this.setUserControlAsCurrent);
-            // 
-            // tabGCN
-            // 
-            this.tabGCN.Controls.Add(this.txtAsm);
-            this.tabGCN.Location = new System.Drawing.Point(4, 23);
-            this.tabGCN.Name = "tabGCN";
-            this.tabGCN.Padding = new System.Windows.Forms.Padding(3);
-            this.tabGCN.Size = new System.Drawing.Size(819, 603);
-            this.tabGCN.TabIndex = 0;
-            this.tabGCN.Text = "GCN";
-            this.tabGCN.UseVisualStyleBackColor = true;
-            // 
-            // txtAsm
-            // 
-            this.txtAsm.AutoCompleteBrackets = true;
-            this.txtAsm.AutoCompleteBracketsList = new char[] {
-        '(',
-        ')',
-        '{',
-        '}',
-        '[',
-        ']',
-        '\"',
-        '\"',
-        '\'',
-        '\''};
-            this.autocompleteMenu1.SetAutocompleteMenu(this.txtAsm, this.autocompleteMenu1);
-            this.txtAsm.AutoScrollMinSize = new System.Drawing.Size(715, 658);
-            this.txtAsm.BackBrush = null;
-            this.txtAsm.ChangedLineColor = System.Drawing.Color.Cornsilk;
-            this.txtAsm.CharHeight = 14;
-            this.txtAsm.CharWidth = 8;
-            this.txtAsm.CurrentLineColor = System.Drawing.Color.LemonChiffon;
-            this.txtAsm.Cursor = System.Windows.Forms.Cursors.IBeam;
-            this.txtAsm.DelayedEventsInterval = 500;
-            this.txtAsm.DelayedTextChangedInterval = 1000;
-            this.txtAsm.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
-            this.txtAsm.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtAsm.Font = new System.Drawing.Font("Courier New", 9.75F);
-            this.txtAsm.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
-            this.txtAsm.IsReplaceMode = false;
-            this.txtAsm.LeftBracket = '{';
-            this.txtAsm.LeftBracket2 = '[';
-            this.txtAsm.Location = new System.Drawing.Point(3, 3);
-            this.txtAsm.Name = "txtAsm";
-            this.txtAsm.Paddings = new System.Windows.Forms.Padding(0);
-            this.txtAsm.RightBracket = '}';
-            this.txtAsm.RightBracket2 = ']';
-            this.txtAsm.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
-            this.txtAsm.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtAsm.ServiceColors")));
-            this.txtAsm.ShowFoldingLines = true;
-            this.txtAsm.Size = new System.Drawing.Size(813, 597);
-            this.txtAsm.TabIndex = 1;
-            this.txtAsm.Text = resources.GetString("txtAsm.Text");
-            this.txtAsm.Zoom = 100;
-            this.txtAsm.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtAsm_TextChanged);
-            this.txtAsm.SelectionChangedDelayed += new System.EventHandler(this.txtAsm_SelectionChangedDelayed);
-            this.txtAsm.Enter += new System.EventHandler(this.setUserControlAsCurrent);
-            // 
-            // saveFileDialog1
-            // 
-            this.saveFileDialog1.DefaultExt = "cs";
-            this.saveFileDialog1.Filter = "C# file (*.cs)|*.cs|All files (*.*)|*.*";
-            // 
-            // openFileDialog1
-            // 
-            this.openFileDialog1.DefaultExt = "cs";
-            this.openFileDialog1.FileName = "openFileDialog1";
-            this.openFileDialog1.Filter = "C# file (*.cs)|*.cs|All files (*.*)|*.*";
-            // 
-            // printDialog1
-            // 
-            this.printDialog1.UseEXDialog = true;
-            // 
-            // autocompleteMenu1
-            // 
-            this.autocompleteMenu1.Colors = ((AutocompleteMenuNS.Colors)(resources.GetObject("autocompleteMenu1.Colors")));
-            this.autocompleteMenu1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
-            this.autocompleteMenu1.ImageList = this.imageList1;
-            this.autocompleteMenu1.Items = new string[0];
-            this.autocompleteMenu1.MaximumSize = new System.Drawing.Size(270, 400);
-            this.autocompleteMenu1.TargetControlWrapper = null;
-            // 
-            // imageList1
-            // 
-            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
-            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
-            this.imageList1.Images.SetKeyName(0, "s.png");
-            this.imageList1.Images.SetKeyName(1, "v.png");
-            this.imageList1.Images.SetKeyName(2, "DS.png");
-            this.imageList1.Images.SetKeyName(3, "Bu.png");
-            this.imageList1.Images.SetKeyName(4, "Clear.png");
-            // 
-            // openFileDialog2
-            // 
-            this.openFileDialog2.FileName = "openFileDialog2";
-            // 
-            // toolStripSeparator6
-            // 
-            this.toolStripSeparator6.Name = "toolStripSeparator6";
-            this.toolStripSeparator6.Size = new System.Drawing.Size(268, 6);
             // 
             // toolStripSeparator7
             // 
@@ -808,11 +591,17 @@
             this.zoom100Ctrl0ToolStripMenuItem.Text = "Zoom 100% (Ctrl-0)";
             this.zoom100Ctrl0ToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
-            // gotoNextCharAltFcharToolStripMenuItem
+            // zoomCtrlWheelToolStripMenuItem
             // 
-            this.gotoNextCharAltFcharToolStripMenuItem.Name = "gotoNextCharAltFcharToolStripMenuItem";
-            this.gotoNextCharAltFcharToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
-            this.gotoNextCharAltFcharToolStripMenuItem.Text = "Find Next Char (Alt-F, [char])";
+            this.zoomCtrlWheelToolStripMenuItem.Name = "zoomCtrlWheelToolStripMenuItem";
+            this.zoomCtrlWheelToolStripMenuItem.Size = new System.Drawing.Size(271, 22);
+            this.zoomCtrlWheelToolStripMenuItem.Text = "Zoom (Ctrl-MouseWheel)";
+            this.zoomCtrlWheelToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
+            // 
+            // toolStripSeparator9
+            // 
+            this.toolStripSeparator9.Name = "toolStripSeparator9";
+            this.toolStripSeparator9.Size = new System.Drawing.Size(268, 6);
             // 
             // addBookmarkCtrlBToolStripMenuItem
             // 
@@ -846,16 +635,226 @@
             this.prevBookmarkCtrlShiftNToolStripMenuItem.Text = "Prev Bookmark (Ctrl-Shift-N)";
             this.prevBookmarkCtrlShiftNToolStripMenuItem.Click += new System.EventHandler(this.SendKeysToControl);
             // 
-            // toolStripSeparator9
+            // txtOutput
             // 
-            this.toolStripSeparator9.Name = "toolStripSeparator9";
-            this.toolStripSeparator9.Size = new System.Drawing.Size(268, 6);
+            this.txtOutput.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this.autocompleteMenu1.SetAutocompleteMenu(this.txtOutput, null);
+            this.txtOutput.AutoScrollMinSize = new System.Drawing.Size(0, 14);
+            this.txtOutput.BackBrush = null;
+            this.txtOutput.CharHeight = 14;
+            this.txtOutput.CharWidth = 8;
+            this.txtOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txtOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.txtOutput.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.txtOutput.IsReplaceMode = false;
+            this.txtOutput.Location = new System.Drawing.Point(0, 830);
+            this.txtOutput.Name = "txtOutput";
+            this.txtOutput.Paddings = new System.Windows.Forms.Padding(0);
+            this.txtOutput.ReadOnly = true;
+            this.txtOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.txtOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtOutput.ServiceColors")));
+            this.txtOutput.ShowLineNumbers = false;
+            this.txtOutput.Size = new System.Drawing.Size(723, 80);
+            this.txtOutput.TabIndex = 3;
+            this.txtOutput.WordWrap = true;
+            this.txtOutput.Zoom = 100;
+            this.txtOutput.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtOutput_TextChanged);
+            this.txtOutput.Enter += new System.EventHandler(this.setUserControlAsCurrent);
+            // 
+            // splitter1
+            // 
+            this.splitter1.Cursor = System.Windows.Forms.Cursors.HSplit;
+            this.splitter1.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.splitter1.Location = new System.Drawing.Point(0, 820);
+            this.splitter1.Name = "splitter1";
+            this.splitter1.Size = new System.Drawing.Size(723, 10);
+            this.splitter1.TabIndex = 4;
+            this.splitter1.TabStop = false;
+            // 
+            // tabControl1
+            // 
+            this.tabControl1.Appearance = System.Windows.Forms.TabAppearance.FlatButtons;
+            this.tabControl1.Controls.Add(this.tabHost);
+            this.tabControl1.Controls.Add(this.tabGCN);
+            this.tabControl1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tabControl1.Location = new System.Drawing.Point(0, 0);
+            this.tabControl1.Multiline = true;
+            this.tabControl1.Name = "tabControl1";
+            this.tabControl1.Padding = new System.Drawing.Point(6, 1);
+            this.tabControl1.SelectedIndex = 0;
+            this.tabControl1.Size = new System.Drawing.Size(723, 820);
+            this.tabControl1.TabIndex = 5;
+            // 
+            // tabHost
+            // 
+            this.tabHost.Controls.Add(this.txtHost);
+            this.tabHost.Location = new System.Drawing.Point(4, 23);
+            this.tabHost.Name = "tabHost";
+            this.tabHost.Padding = new System.Windows.Forms.Padding(3);
+            this.tabHost.Size = new System.Drawing.Size(715, 793);
+            this.tabHost.TabIndex = 1;
+            this.tabHost.Text = "C# Host";
+            this.tabHost.UseVisualStyleBackColor = true;
+            // 
+            // txtHost
+            // 
+            this.txtHost.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this.autocompleteMenu1.SetAutocompleteMenu(this.txtHost, null);
+            this.txtHost.AutoIndentCharsPatterns = "\n^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;]+);\n^\\s*(case|default)\\s*[^:]*(" +
+    "?<range>:)\\s*(?<range>[^;]+);\n";
+            this.txtHost.AutoScrollMinSize = new System.Drawing.Size(627, 840);
+            this.txtHost.BackBrush = null;
+            this.txtHost.BracketsHighlightStrategy = FastColoredTextBoxNS.BracketsHighlightStrategy.Strategy2;
+            this.txtHost.ChangedLineColor = System.Drawing.Color.Cornsilk;
+            this.txtHost.CharHeight = 14;
+            this.txtHost.CharWidth = 8;
+            this.txtHost.CurrentLineColor = System.Drawing.Color.LemonChiffon;
+            this.txtHost.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txtHost.DelayedEventsInterval = 500;
+            this.txtHost.DelayedTextChangedInterval = 1000;
+            this.txtHost.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.txtHost.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtHost.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.txtHost.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
+            this.txtHost.IsReplaceMode = false;
+            this.txtHost.Language = FastColoredTextBoxNS.Language.CSharp;
+            this.txtHost.LeftBracket = '(';
+            this.txtHost.LeftBracket2 = '{';
+            this.txtHost.Location = new System.Drawing.Point(3, 3);
+            this.txtHost.Name = "txtHost";
+            this.txtHost.Paddings = new System.Windows.Forms.Padding(0);
+            this.txtHost.RightBracket = ')';
+            this.txtHost.RightBracket2 = '}';
+            this.txtHost.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.txtHost.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtHost.ServiceColors")));
+            this.txtHost.ShowFoldingLines = true;
+            this.txtHost.Size = new System.Drawing.Size(709, 787);
+            this.txtHost.TabIndex = 2;
+            this.txtHost.Text = resources.GetString("txtHost.Text");
+            this.txtHost.Zoom = 100;
+            this.txtHost.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtHost_TextChanged);
+            this.txtHost.Enter += new System.EventHandler(this.setUserControlAsCurrent);
+            // 
+            // tabGCN
+            // 
+            this.tabGCN.Controls.Add(this.txtAsm);
+            this.tabGCN.Location = new System.Drawing.Point(4, 23);
+            this.tabGCN.Name = "tabGCN";
+            this.tabGCN.Padding = new System.Windows.Forms.Padding(3);
+            this.tabGCN.Size = new System.Drawing.Size(715, 793);
+            this.tabGCN.TabIndex = 0;
+            this.tabGCN.Text = "GCN";
+            this.tabGCN.UseVisualStyleBackColor = true;
+            // 
+            // txtAsm
+            // 
+            this.txtAsm.AutoCompleteBrackets = true;
+            this.txtAsm.AutoCompleteBracketsList = new char[] {
+        '(',
+        ')',
+        '{',
+        '}',
+        '[',
+        ']',
+        '\"',
+        '\"',
+        '\'',
+        '\''};
+            this.txtAsm.AutoScrollMinSize = new System.Drawing.Size(682, 658);
+            this.txtAsm.BackBrush = null;
+            this.txtAsm.ChangedLineColor = System.Drawing.Color.Cornsilk;
+            this.txtAsm.CharHeight = 14;
+            this.txtAsm.CharWidth = 8;
+            this.txtAsm.CurrentLineColor = System.Drawing.Color.LemonChiffon;
+            this.txtAsm.Cursor = System.Windows.Forms.Cursors.IBeam;
+            this.txtAsm.DelayedEventsInterval = 500;
+            this.txtAsm.DelayedTextChangedInterval = 1000;
+            this.txtAsm.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
+            this.txtAsm.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtAsm.Font = new System.Drawing.Font("Courier New", 9.75F);
+            this.txtAsm.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
+            this.txtAsm.IsReplaceMode = false;
+            this.txtAsm.LeftBracket = '{';
+            this.txtAsm.LeftBracket2 = '[';
+            this.txtAsm.Location = new System.Drawing.Point(3, 3);
+            this.txtAsm.Name = "txtAsm";
+            this.txtAsm.Paddings = new System.Windows.Forms.Padding(0);
+            this.txtAsm.RightBracket = '}';
+            this.txtAsm.RightBracket2 = ']';
+            this.txtAsm.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
+            this.txtAsm.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtAsm.ServiceColors")));
+            this.txtAsm.ShowFoldingLines = true;
+            this.txtAsm.Size = new System.Drawing.Size(709, 787);
+            this.txtAsm.TabIndex = 1;
+            this.txtAsm.Text = resources.GetString("txtAsm.Text");
+            this.txtAsm.Zoom = 100;
+            this.txtAsm.TextChanged += new System.EventHandler<FastColoredTextBoxNS.TextChangedEventArgs>(this.txtAsm_TextChanged);
+            this.txtAsm.SelectionChangedDelayed += new System.EventHandler(this.txtAsm_SelectionChangedDelayed);
+            this.txtAsm.Enter += new System.EventHandler(this.setUserControlAsCurrent);
+            // 
+            // saveFileDialog1
+            // 
+            this.saveFileDialog1.DefaultExt = "cs";
+            this.saveFileDialog1.Filter = "C# file (*.cs)|*.cs|All files (*.*)|*.*";
+            // 
+            // openFileDialog1
+            // 
+            this.openFileDialog1.DefaultExt = "cs";
+            this.openFileDialog1.FileName = "openFileDialog1";
+            this.openFileDialog1.Filter = "C# file (*.cs)|*.cs|All files (*.*)|*.*";
+            // 
+            // printDialog1
+            // 
+            this.printDialog1.UseEXDialog = true;
+            // 
+            // autocompleteMenu1
+            // 
+            this.autocompleteMenu1.Colors = ((AutocompleteMenuNS.Colors)(resources.GetObject("autocompleteMenu1.Colors")));
+            this.autocompleteMenu1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.autocompleteMenu1.ImageList = this.imageList1;
+            this.autocompleteMenu1.Items = new string[0];
+            this.autocompleteMenu1.MaximumSize = new System.Drawing.Size(270, 400);
+            this.autocompleteMenu1.TargetControlWrapper = null;
+            // 
+            // imageList1
+            // 
+            this.imageList1.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imageList1.ImageStream")));
+            this.imageList1.TransparentColor = System.Drawing.Color.Transparent;
+            this.imageList1.Images.SetKeyName(0, "s.png");
+            this.imageList1.Images.SetKeyName(1, "v.png");
+            this.imageList1.Images.SetKeyName(2, "DS.png");
+            this.imageList1.Images.SetKeyName(3, "Bu.png");
+            this.imageList1.Images.SetKeyName(4, "Clear.png");
+            // 
+            // openFileDialog2
+            // 
+            this.openFileDialog2.FileName = "openFileDialog2";
             // 
             // frmMain
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(827, 742);
+            this.ClientSize = new System.Drawing.Size(723, 932);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.splitter1);

@@ -47,7 +47,7 @@ namespace GcnTools
         /// <summary>The actual size of the register in bytes. Usually either 1, 2, 4, or 8.</summary>
         public int size;
         /// <summary>They data dataType for the register/variable. Usually either f=float, i=int, u=unsigned, or b=bool.</summary>
-        public char type; //f, i, u, b
+        public char type; // f, i, u, b
         /// <summary>Returns the register as a string such as 's17' or 'v9'</summary>
         public string RegAsString
         {

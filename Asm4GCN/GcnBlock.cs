@@ -98,7 +98,7 @@ namespace GcnTools
 
         private byte[] Compile(string[] srcLines, out int binSize, Log log)
         {
-            //log.WriteLine("Starting Lines: {0} ms", startedAt.ElapsedMilliseconds);
+            // log.WriteLine("Starting Lines: {0} ms", startedAt.ElapsedMilliseconds);
             bool inCommentMode = false;
             List<GcnStmt> needLabelFilled = new List<GcnStmt>();
             for (int line = 1; line < srcLines.Length + 1; line++)  // from lines 1 to Last
@@ -169,14 +169,14 @@ namespace GcnTools
         private void FillOpSizeValue(Log log, List<GcnStmt> needLabelFilled)
         {
             /////////// (1) Find the "stmt.opSize" of each stmt and build min/max distance tables ///////////
-            //log.WriteLine("Starting to fill stmt.opSizes: {0} ms", startedAt.ElapsedMilliseconds);
+            // log.WriteLine("Starting to fill stmt.opSizes: {0} ms", startedAt.ElapsedMilliseconds);
             int[] minDists = new int[gcnStmts.Count + 1];
             int[] maxDists = new int[gcnStmts.Count + 1];
             while (true)
             {
                 int minDist = 0, maxDist = 0;
 
-                //fill min/max distance lists
+                // fill min/max distance lists
                 List<GcnStmt> toResolove = new List<GcnStmt>();
 
                 for (int i = 0; i < gcnStmts.Count; i++)
@@ -205,8 +205,8 @@ namespace GcnTools
                     // Summary: Lets first try and make the instruction as large as possible by using the  
                     // largest jump length.  If its of size 4 then it always will always be 4.
 
-                    //Log logMax = new Log(stmt.srcLine, true);
-                    Log logMax = log; //lets just re-use log in here since we will not using it
+                    // Log logMax = new Log(stmt.srcLine, true);
+                    Log logMax = log; // lets just re-use log in here since we will not using it
                     logMax.paused = true;
                     logMax.lineNum = stmt.srcLine;
 
@@ -232,7 +232,7 @@ namespace GcnTools
                         stmt.opSize = stmt.opCode.Size;
                         needLabelFilled.Remove(stmt); // future: Lists can be slow as they fills up (maybe use dictionary)
                         logMax.CommitMessagesAndUnPause();
-                        //Console.WriteLine("###Jump on LINE(" + stmt.srcLine + ")  Inst:" + stmt.inst.id + " Options:" + stmt.options);
+                        // Console.WriteLine("###Jump on LINE(" + stmt.srcLine + ")  Inst:" + stmt.inst.id + " Options:" + stmt.options);
 
                         // we should update the rest of the minDists[] and maxDists[]  here
                         if (stmt.opSize == 4)
@@ -242,7 +242,7 @@ namespace GcnTools
                             for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
                                 minDists[i + 1] += 4;
 
-                        //for (int i = 0; i < gcnStmts.Count; i++)
+                        // for (int i = 0; i < gcnStmts.Count; i++)
                         //    Console.WriteLine(minDists[i] + " " + maxDists[i]);
 
                         continue;
@@ -282,10 +282,10 @@ namespace GcnTools
 
                     Log logMin = new Log(stmt.srcLine, true);
                     OpCode opCodeMin = Encoder.convertInstToBin(optionsMin, stmt.inst, logMin);
-                    //Console.WriteLine("###Min LINE:" + stmt.srcLine + " Inst:" + stmt.inst.id);
+                    // Console.WriteLine("###Min LINE:" + stmt.srcLine + " Inst:" + stmt.inst.id);
 
 
-                    if (logMax.hasErrors && logMin.hasErrors) //if both versions have errors now then they always will
+                    if (logMax.hasErrors && logMin.hasErrors) // if both versions have errors now then they always will
                         stmt.opSize = opCodeMin.Size;
                     else if (logMax.hasErrors)
                         stmt.opSize = opCodeMin.Size;
@@ -293,7 +293,7 @@ namespace GcnTools
                         stmt.opSize = opCodeMax.Size;
                     else if (opCodeMin.literal.HasValue && opCodeMax.literal.HasValue)
                         stmt.opSize = 8;
-                    else //if both min and max versions are different sizes then it could either. Try again later...
+                    else // if both min and max versions are different sizes then it could either. Try again later...
                         stmt.opSize = 0; //future: maybe just give it 8 and be done with it?
                 }
 
@@ -307,10 +307,10 @@ namespace GcnTools
 
 
             /////////// (2) Fill in the "stmt.opCode" for any stmt that have a label. ///////////
-            //log.WriteLine("Starting to fill stmt.opSizes: {0} ms", startedAt.ElapsedMilliseconds);
+            // log.WriteLine("Starting to fill stmt.opSizes: {0} ms", startedAt.ElapsedMilliseconds);
             foreach (GcnStmt stmt in needLabelFilled)
             {
-                //Lets Convert labels to hex values
+                // Lets Convert labels to hex values
                 stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
                 {
                     string labelName = m.Value.Remove(0, 1);
@@ -321,14 +321,14 @@ namespace GcnTools
 
                 log.lineNum = stmt.srcLine;
                 stmt.opCode = Encoder.convertInstToBin(stmt.options, stmt.inst, log);
-                //Console.WriteLine("###Jump on LINE(" + stmt.srcLine + ")  Inst:" + stmt.inst.id + " Options:" + stmt.options);
+                // Console.WriteLine("###Jump on LINE(" + stmt.srcLine + ")  Inst:" + stmt.inst.id + " Options:" + stmt.options);
             }
         }
 
         private void ProcessLine(string curLine, ref bool inCommentMode, List<GcnStmt> needLabelFilled, int line, Log log)
         {
             log.lineNum = line;
-            //log.Error("{0}\t{1}", line, curLine.ToLower());
+            // log.Error("{0}\t{1}", line, curLine.ToLower());
 
             // Skip empty lines
             if (string.IsNullOrWhiteSpace(curLine))
@@ -350,7 +350,7 @@ namespace GcnTools
                 else
                     return; // this entire line is in comment mode
             }
-            else if (Regex.IsMatch(curLine, @"/\*.*")) //not inCommentMode AND opening comment found '\*'
+            else if (Regex.IsMatch(curLine, @"/\*.*")) // not inCommentMode AND opening comment found '\*'
             {
                 inCommentMode = true;
                 curLine = Regex.Replace(curLine, @"/\*.*", "");
@@ -371,10 +371,11 @@ namespace GcnTools
             string cmd = Regex.Match(curLine, @"(?<=^[ \t]*\#)(define|ref|[vs]_pool)").Value;
             
             ///////// Process #S_POOL / #V_POOL  -->  sRegPool/vRegPool /////////
-            if (cmd == "v_pool" || cmd == "s_pool") //Regex.IsMatch(curLine, @"^[ \t]*\#[vs]_pool[ \t]"))
+            if (cmd == "v_pool" || cmd == "s_pool") // Regex.IsMatch(curLine, @"^[ \t]*\#[vs]_pool[ \t]"))
             {
+                // skip line if #S_POOL / #V_POOL
                 if (sRegPool == null)
-                    return; //skip line if #S_POOL / #V_POOL
+                    return; 
                 
                 // Show warning if there are already existing vars.
                 if (vars.Count > 0)
@@ -429,7 +430,7 @@ namespace GcnTools
                 }
 
                 if (def.Groups["main"].Success)
-                    define.data = def.Groups["main"].Value; //you have NonSerializedAttribute idea what are you doing 676
+                    define.data = def.Groups["main"].Value; // you have NonSerializedAttribute idea what are you doing 676
 
                 // if the label does not start and end with a "_" then throw a warning
                 if (define.name[0] != '_' || define.name[define.name.Length-1] != '_')
@@ -487,7 +488,7 @@ namespace GcnTools
             string[] stmts = curLine.Split(new char[] { ';' } , StringSplitOptions.RemoveEmptyEntries);
             foreach (string stmt in stmts)
             {
-                //Extract first word, and options
+                // Extract first word, and options
                 char[] delimiterChars = { ',', ' ', '\t' };
                 string[] commands = stmt.Split(delimiterChars, 2, StringSplitOptions.RemoveEmptyEntries);
                 string firstWord = commands[0];

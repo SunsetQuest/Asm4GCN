@@ -273,7 +273,7 @@
         AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
         LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
         ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAAAe
-        CwAAAk1TRnQBSQFMAgEBBQEAAagBAQGoAQEBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
+        CwAAAk1TRnQBSQFMAgEBBQEAAcgBAQHIAQEBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
         AwABIAMAAQEBAAEYBgABGBIAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/
         kAAw/5AAMP+QADD/kAAw/5AAMP+QAA//AUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEi
         cv8BkAHbAf8CAAE6EgABOgIAAf8B2wGQGP8BTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGx
@@ -360,106 +360,64 @@
 </value>
   </data>
   <data name="txtHost.Text" xml:space="preserve">
-    <value>using System;
-using System.Linq;
-using NOpenCL;
+    <value>using System; 
+using System.Linq; 
+using NOpenCL; 
 using OpenClWithGcnNS;
 
-namespace TestNS
+static class Example1 // This examples doubles one array into another.
 {
-  // This example doubles each value in an array and saves the results to another array.
-  static class Example1 
+  public static void Main()  
   {
-    public static void Main()  
-    {
-        string log; 
-        ErrorCode err;
-        Event lastEvent; 
-        IntPtr nullPtr;
-        
-        /************ Load our Assembly  **************************************************/
-        const string source = GCN_NS.Code.DevCode;
-        
-        /************ Initialize OpenClWithGCN    *****************************************/
-        OpenClWithGCN inj     = new OpenClWithGCN(); 
-        OpenClEnvironment env = inj.env;  // Let just use the built in environment
-        bool success          = inj.GcnCompile(source, out log);
-        if (!success) return;
-        
-        /************ Create some random data for testing*    *****************************/
-        var random = new Random();
-        const int count = 1024 * 1024;
-        const int dataSz = count * sizeof(float);
-        float[] data = (from i in Enumerable.Range(0, count) 
-                        select (float)random.NextDouble()).ToArray();
-        
-        /************ Create a kernel from our modProgram    ******************************/
-        Kernel kernel = Cl.CreateKernel(inj.env.program, "myAsmFunc", out err);
-        if (GetError(err, "CreateKernel()")) return;
-        
-        /************ Allocate cl_input, and fill with data *******************************/
-        IMem cl_input = Cl.CreateBuffer(env.context, MemFlags.ReadOnly, dataSz, out err);
-        if (GetError(err, "CreateBuffer()")) return;
-        
-        /************ Create an cl_output memory buffer for our results    ****************/
-        IMem cl_output = (Mem)Cl.CreateBuffer(env.context,MemFlags.WriteOnly,dataSz,out err);
-        if (GetError(err, "CreateBuffer()")) return;
-        
-        /************ Copy our host buffer of random values to cl_input device buffer *****/
-        err = Cl.EnqueueWriteBuffer(env.cmdQueue, cl_input, Bool.True, IntPtr.Zero,
-            new IntPtr(dataSz), data, 0, null, out lastEvent);
-        if (GetError(err, "EnqueueWriteBuffer()")) return;
-        
-        /************ Get the max number of work items supported for this kernel/device ***/
-        InfoBuffer local = new InfoBuffer(new IntPtr(4));
-        err = Cl.GetKernelWorkGroupInfo(kernel, env.devices[0], 
-              KernelWorkGroupInfo.WorkGroupSize,new IntPtr(sizeof(int)), local, out nullPtr);
-        if (GetError(err, "GetKernelWorkGroupInfo()")) return;
-        
-        /************ Set the arguments to our kernel, and enqueue it for execution *******/
-        err = Cl.SetKernelArg(kernel, 0, new IntPtr(4), cl_input);
-        if (GetError(err, "SetKernelArg()")) return;
-        err = Cl.SetKernelArg(kernel, 1, new IntPtr(4), cl_output);
-        if (GetError(err, "SetKernelArg()")) return;
-        IntPtr[] workGroupSizePtr = new IntPtr[] { new IntPtr(count) };
-        IntPtr[] localGrpSizePtr = null;//must be null if reqd_work_group_size attrib is used
-        //IntPtr[] localGrpSizePtr=new IntPtr[]{new IntPtr(256),new IntPtr(1),new IntPtr(1)};
-        
-        /************ Enqueue and run the kernel ******************************************/
-        err = Cl.EnqueueNDRangeKernel(env.cmdQueue, kernel, 1, null, workGroupSizePtr,
-            localGrpSizePtr, 0, null, out lastEvent);
-        if (GetError(err, "EnqueueNDRangeKernel()")) return;
-        
-        /********** Force command queue to get processed, wait until all commands finish **/
-        env.err = Cl.Finish(env.cmdQueue);
-        if (GetError(err, "Finish()")) return;
-        
-        /************ Read back the results ***********************************************/
-        float[] results = new float[count];
-        env.err = Cl.EnqueueReadBuffer(env.cmdQueue, cl_output, Bool.True, IntPtr.Zero,
-            new IntPtr(dataSz), results, 0, null, out lastEvent);
-        if (GetError(err, "EnqueueReadBuffer()")) return;
-        
-        /************ Validate our results ************************************************/
-        int correct = 0;
-        for (int i = 0; i &lt; count; i++)
-            correct += (results[i] == data[i] + data[i]) ? 1 : 0;
-        int matches = Enumerable.Range(0, 10).Select(i =&gt; 100 + 10 * i).ToArray().Count();
-        
-        /************ Print a brief summary detailing the results *************************/
-        Console.WriteLine("{0} - Computed {1}/{2} correct values!",
-            correct==count?"PASS":"FAIL", correct.ToString(), count.ToString());
-        
-        Console.ReadKey();
-    }
-    
-    private static bool GetError(ErrorCode err, string errorWith = "")
-    {
-        bool Success = (err == ErrorCode.Success);
-        if (!Success)
-            Console.WriteLine("ERROR: {0} generated {1}", errorWith, err);
-        return (!Success);
-    }
+    // Create and build a program from our OpenCL-C source code 
+    const string source = GCN_NS.Code.DevCode; //get text from GCN tab
+
+    // Initialize OpenClWithGCN 
+    OpenClWithGCN gprog   = new OpenClWithGCN();
+    OpenClEnvironment env = gprog.env;  // use the default environment
+    bool success          = gprog.GcnCompile(source);
+    Console.Write(env.lastMessage);
+    if (!success) return;
+
+    // Create some random data  
+    var random = new Random();
+    const int count = 1000000;
+    const int dataSz = count * sizeof(float);
+    float[] data = (from i in Enumerable.Range(0, count) 
+         select (float)random.NextDouble()).ToArray();
+
+    // Create a kernel from our modProgram   
+    Kernel kernel = env.program.CreateKernel("myAsmFunc");
+
+    // Allocate an input and output memory buffers
+    Mem input  = env.context.CreateBuffer(MemoryFlags.ReadOnly, dataSz);
+    Mem output = env.context.CreateBuffer(MemoryFlags.WriteOnly,dataSz);
+
+    // Copy our host buffer of random values to input device buffer 
+    env.cmdQueue.EnqueueWriteBuffer(input, true, 0, dataSz, data);
+
+    // Set the arguments to our kernel, and enqueue it for execution 
+    kernel.Arguments[0].SetValue(input);
+    kernel.Arguments[1].SetValue(output);
+
+    // Enqueue and run the kernel 
+    env.cmdQueue.EnqueueNDRangeKernel(kernel, count, 256);
+
+    // Force command queue to be processed, wait until all commands finish
+    env.cmdQueue.Finish();
+
+    // Read back the results
+    float[] results = new float[count];
+    env.cmdQueue.EnqueueReadBufferAndWait(output, results);
+
+    // Validate our results 
+    int correct = 0;
+    for (int i = 0; i &lt; count; i++)
+      correct += (results[i] == data[i] + data[i]) ? 1 : 0;
+
+    // Print a brief summary detailing the results 
+    Console.WriteLine("Computed {0}/{1} correct values!", correct, count);
+    Console.ReadKey();
   }
 }</value>
   </data>
@@ -544,6 +502,9 @@ namespace TestNS
   </metadata>
   <metadata name="openFileDialog2.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>17, 56</value>
+  </metadata>
+  <metadata name="$this.TrayHeight" type="System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089">
+    <value>125</value>
   </metadata>
   <data name="$this.Icon" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
     <value>

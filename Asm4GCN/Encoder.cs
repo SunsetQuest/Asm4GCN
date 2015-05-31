@@ -417,7 +417,7 @@ namespace GcnTools
             
             op_code.code |= ParseOperand.setBitOnFound(m, "LDS", 16, "ADDR64", 15, "GLC", 14, "IDXEN", 13, "OFFEN", 12);
 
-            //The format parameter is not allowed
+            // The format parameter is not allowed
             if (m.Groups["FORMAT"].Success)
                log.Error("The FORMAT parameter is only allowed in TBUFFER_* instructions.");
 
@@ -463,7 +463,7 @@ namespace GcnTools
                 log.Error("S_Load/S_Buffer must contain an even reg number for the SBASE.");
 
             // OFFSET (argument 2) - Either holds a ubyte offset or points to a SGPR that contains a byte offset (inline constants not allowed)
-            if (args.Length > 2)  //if we don't have an offset then lets not set anything (leave zero)
+            if (args.Length > 2)  // if we don't have an offset then lets not set anything (leave zero)
             {
                 OpInfo offset = ParseOperand.parseOperand(args[2], OpType.SCALAR_SRC, 3, log);
                 if ((offset.dataDisc & DataDesc.NEGITIVE) != 0)
@@ -669,7 +669,6 @@ namespace GcnTools
                             if (EXPCt > 7)
                                 log.Warning("EXPCt must be between 0 and 7.");
                             break;
-                        //default: 
                     }
                 }
 
@@ -722,7 +721,7 @@ namespace GcnTools
             if (instr.name == "v_interp_mov_f32")
             {
                 Match m = Regex.Match(options, 
-                    @"v(\d+)\s*[,\s]\s*(p?)(\d+)\s*[,\s]\s*" + //first two opps
+                    @"v(\d+)\s*[,\s]\s*(p?)(\d+)\s*[,\s]\s*" + // first two opps
                     @"(?:attr(\d+)\.([xyzw0123])|" + // for v_interp_mov_f32 v0, p0, attr0.z format
                     @"(?<5>\d+)\s*[,\s]\s*(?<4>\d+)\s*[,\s]\s*\[\s*m0\s*\])"); // for v_interp_mov_f32 v0, p0, 3, 0, [m0] format 
 
@@ -749,7 +748,7 @@ namespace GcnTools
             else if (instr.name == "v_interp_p1_f32")
             {
                 Match m = Regex.Match(options, 
-                    @"v(\d+)\s*[,\s]\s*(v)(\d+)\s*[,\s]\s*" + //first two opps
+                    @"v(\d+)\s*[,\s]\s*(v)(\d+)\s*[,\s]\s*" + // first two opps
                     @"(?:attr(\d+)\.([xyzw0123])|" + // for v_interp_p1_f32 v0, p0, attr0.z format
                     @"(?<5>\d+)\s*[,\s]\s*(?<4>\d+)\s*[,\s]\s*\[\s*m0\s*\])"); // for v_interp_p1_f32 v0, v0, 3, 0, [m0] format 
                 
@@ -864,7 +863,7 @@ namespace GcnTools
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
             int argCt = args.Length;
 
-            //handle "vcc" destination in VOP2.  example: v_add_a32 v0, vcc, v1, v2
+            // handle "vcc" destination in VOP2.  example: v_add_a32 v0, vcc, v1, v2
             
             if (instr.OpNum.IsBetween<uint>(36, 43))
                 if (args[1] == "vcc")
@@ -1000,7 +999,7 @@ namespace GcnTools
 
         private static void Vector_2Src_ALU_Limitations(ref OpInfo vsrc0, ref OpInfo vsrc1, Log log)
         {
-            //At most one SGPR can be read per instruction, but the value can be used for more than one operand.
+            // At most one SGPR can be read per instruction, but the value can be used for more than one operand.
             int SGPRCt = (vsrc0.flags.HasFlag(OpType.SGPR) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.SGPR) ? 1 : 0);
             int M0__Ct = (vsrc0.flags.HasFlag(OpType.M0) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.M0) ? 1 : 0);
             int lit_Ct = (vsrc0.flags.HasFlag(OpType.LITERAL) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.LITERAL) ? 1 : 0);
@@ -1008,18 +1007,18 @@ namespace GcnTools
             if (SGPRCt > 1)
                 log.Error("At most one SGPR can be read per instruction, but the value can be used for more than one operand.");
 
-            //At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.
+            // At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.
             if (lit_Ct > ((SGPRCt + M0__Ct > 0) ? 0 : 1))
                 log.Error("At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.");
 
-            //Only SRC0 can use LDS_DIRECT.
+            // Only SRC0 can use LDS_DIRECT.
             if (vsrc1.flags.HasFlag(OpType.LDS_DIRECT))
                 log.Error("Only SRC0 can use LDS_DIRECT.");
         }
 
         private static void Vector_3Src_ALU_Limitations(ref OpInfo vsrc0, ref OpInfo vsrc1, ref OpInfo vsrc2, Log log)
         {
-            //At most one SGPR can be read per instruction, but the value can be used for more than one operand.
+            // At most one SGPR can be read per instruction, but the value can be used for more than one operand.
             int SGPRCt = (vsrc0.flags.HasFlag(OpType.SGPR) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.SGPR) ? 1 : 0) + (vsrc2.flags.HasFlag(OpType.SGPR) ? 1 : 0);
             int M0__Ct = (vsrc0.flags.HasFlag(OpType.M0) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.M0) ? 1 : 0) + (vsrc2.flags.HasFlag(OpType.M0) ? 1 : 0);
             int lit_Ct = (vsrc0.flags.HasFlag(OpType.LITERAL) ? 1 : 0) + (vsrc1.flags.HasFlag(OpType.LITERAL) ? 1 : 0) + (vsrc2.flags.HasFlag(OpType.LITERAL) ? 1 : 0);
@@ -1027,11 +1026,11 @@ namespace GcnTools
             if (SGPRCt > 1)
                 log.Error("At most one SGPR can be read per instruction, but the value can be used for more than one operand.");
 
-            //At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.
+            // At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.
             if (lit_Ct > ((SGPRCt + M0__Ct > 0) ? 0 : 1))
                 log.Error("At most one literal constant can be used, and only when an SGPR or M0 is not used as a source.");
 
-            //Only SRC0 can use LDS_DIRECT.
+            // Only SRC0 can use LDS_DIRECT.
             if (vsrc1.flags.HasFlag(OpType.LDS_DIRECT) | vsrc2.flags.HasFlag(OpType.LDS_DIRECT))
                 log.Error("Only SRC0 can use LDS_DIRECT.");
         }

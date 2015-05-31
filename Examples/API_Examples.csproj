@@ -44,9 +44,6 @@
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="OpenCL.Net">
-      <HintPath>.\OpenCL.Net.dll</HintPath>
-    </Reference>
     <Reference Include="OpenClWithGCN, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\OpenClWithGCN\bin\Debug\OpenClWithGCN.dll</HintPath>
@@ -68,6 +65,12 @@
     <None Include="App.config">
       <SubType>Designer</SubType>
     </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\NOpenCL\NOpenCL\NOpenCL.csproj">
+      <Project>{c94f61dd-9361-4b1f-b1a8-dad72bd6fd51}</Project>
+      <Name>NOpenCL</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

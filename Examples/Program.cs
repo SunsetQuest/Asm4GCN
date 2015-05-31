@@ -2,7 +2,6 @@
 using System.Diagnostics;
 using System.Linq;
 
-
 namespace TestNS
 {
     class Program
@@ -10,7 +9,7 @@ namespace TestNS
         static void Main(string[] args)
         {
             Example1.Run();
-            //Example2.Run();
+            // Example2.Run();
             Console.ReadKey();
          }
     }

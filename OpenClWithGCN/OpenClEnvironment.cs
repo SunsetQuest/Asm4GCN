@@ -10,7 +10,9 @@ namespace OpenClWithGcnNS
 {
     public class OpenClEnvironment
     {
-        public ErrorCode err; // Last error
+        public ErrorCode lastError; // Last error
+
+        public string lastMessage;  // Last message
 
         /// <summary>The host plus a collection of devices managed by the OpenCL framework that allow an application to share resources and execute kernels on devices in the platform.(source: bjurkovski on codeplex)</summary>
         public Platform[] platforms;
@@ -18,7 +20,7 @@ namespace OpenClWithGcnNS
         /// <summary>A device is a hardware unit on a system. It can be made up of CPUs, GPUs, and other types of OpenCL compatible devices.</summary>
         public Device[] devices;
 
-        /// <summary>Defines the entire OpenCL environment, including OpenCL kernels, devices, memory management, command-queues, etc.(source: bjurkovski on codeplex)</summary>
+        /// <summary>Defines the entire OpenCL environment, including OpenCL kernels, devices, memory management, command-queues, etc.(source: bjurkovski on CodePlex)</summary>
         public Context context;
 
         /// <summary>the OpenCL command-queue, as the name may suggest, is an object where OpenCL commands are enqueued to be executed by the device. "The command-queue is created on a specific device in a context [...] Having multiple command-queues allows applications to queue multiple independent commands without requiring synchronization." (source: OpenCL Specification and bjurkovski on codeplex)</summary>
@@ -39,11 +41,10 @@ namespace OpenClWithGcnNS
         public static OpenClEnvironment InitializeWithDefaults()
         {
             OpenClEnvironment env = new OpenClEnvironment();
-            env.platforms = Platform.GetPlatforms(); //nopencl env.platforms = Cl.GetPlatformIDs(out env.err);
-            env.devices =  env.platforms[0].GetDevices(DeviceType.Gpu); //todo: get rid of[0] //nopencl  env.devices = Cl.GetDeviceIDs(env.platforms[0], DeviceType.Gpu, out env.err);  // clGetDeviceIDs(CL_DEVICE_TYPE_GPU, 1, &device, NULL);
-            env.context = Context.Create(env.devices); // env.context = Cl.CreateContext(null, 1, env.devices, null, IntPtr.Zero, out env.err); //cl_contextcontext = clCreateContext(0, 1, & device, NULL, NULL, NULL);
-            env.cmdQueue = contextPr
-            env.cmdQueue = Cl.CreateCommandQueue(env.context, env.devices[0], CommandQueueProperties.None, out env.err); //cl_command_queuequeue = clCreateCommandQueue(context, device, 0, NULL);
+            env.platforms = Platform.GetPlatforms(); 
+            env.devices =  env.platforms[0].GetDevices(DeviceType.Gpu); //todo: get rid of[0]
+            env.context = Context.Create(env.devices);
+            env.cmdQueue = env.context.CreateCommandQueue(env.devices[0]);
             return env;
         }
     }

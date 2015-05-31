@@ -47,8 +47,8 @@ namespace Asm4GcnGUI
                 File.Copy("OpenClWithGCN.dll", outputFolder + "\\OpenClWithGCN.dll", true);
             //if (!File.Exists(outputFolder + "\\Asm4GCN.exe"))
                 File.Copy("Asm4GCN.exe", outputFolder + "\\Asm4GCN.exe", true);
-            //if (!File.Exists(outputFolder + "\\OpenCL.Net.dll"))
-                File.Copy("OpenCL.Net.dll", outputFolder + "\\OpenCL.Net.dll", true);
+            //if (!File.Exists(outputFolder + "\\NOpenCL.dll"))
+                File.Copy("NOpenCL.dll", outputFolder + "\\NOpenCL.dll", true);
 
             /////////////////// Setup AutoCompletes for GCN asm window  //////////////////////
             autocompleteMenu1.MaximumSize = new System.Drawing.Size(700, 3000);
@@ -111,12 +111,12 @@ namespace Asm4GcnGUI
             if (enableVSDebug)
                 txtOutput.AppendText("INFO: compiled with debug info - temp files will not be cleaned up.\r\n");
 
-            string output;
-            bool success = gcn.GcnCompile(txtAsm.Text, out output);
-            
-            if (output.Length == 0)
-                output = "INFO: (no Errors/Warnings in GCN kernel)\r\n";
-            txtOutput.AppendText(output);
+            bool success = gcn.GcnCompile(txtAsm.Text);
+
+            if (String.IsNullOrWhiteSpace(gcn.env.lastMessage))
+                txtOutput.AppendText("INFO: (no Errors/Warnings in GCN kernel)\r\n");
+            else
+                txtOutput.AppendText(gcn.env.lastMessage);
 
             if (success)
             {
@@ -132,7 +132,7 @@ namespace Asm4GcnGUI
                     //TreatWarningsAsErrors = false,
                     WarningLevel = 3,
                     ReferencedAssemblies = { "mscorlib.dll", "System.dll", "System.Core.dll", "System.Data.dll", 
-                        "System.Data.Linq.dll", "System.Xml.dll", "System.Xml.Linq.dll", "OpenCL.Net.dll", 
+                        "System.Data.Linq.dll", "System.Xml.dll", "System.Xml.Linq.dll", "NOpenCL.dll", 
                         "OpenClWithGCN.dll" }
                 }
                 , GetEncapsulatedAsmText(), txtHost.Text);
@@ -462,9 +462,7 @@ namespace Asm4GcnGUI
 
         private void saveKernelToFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string output;
-            bool success = gcn.GcnCompile(txtAsm.Text, out output);
-            if (success)
+            if (gcn.GcnCompile(txtAsm.Text))
             {
                 foreach (AsmBlock blk in gcn.env.asmBlocks)
                 {
@@ -476,15 +474,13 @@ namespace Asm4GcnGUI
             else
             {
                 MessageBox.Show("Unable to export (see output log)");
-                txtOutput.Text = output;
+                txtOutput.Text = gcn.env.lastMessage;
             }
         }
 
         private void displayKernelsBinaryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string output;
-            bool success = gcn.GcnCompile(txtAsm.Text, out output);
-            if (success)
+            if (gcn.GcnCompile(txtAsm.Text))
             {
                 txtOutput.Text = "INFO: Open kernel in notepad";
                 StringBuilder hex = new StringBuilder();
@@ -503,15 +499,13 @@ namespace Asm4GcnGUI
             else
             {
                 MessageBox.Show("Unable to export (see output log)");
-                txtOutput.Text = output;
+                txtOutput.Text = gcn.env.lastMessage;
             }
         }
 
         private void saveDummyBinToFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string output;
-            bool success = gcn.GcnCompile(txtAsm.Text, out output);
-            if (success)
+            if (gcn.GcnCompile(txtAsm.Text))
             {
                 txtOutput.Text = "INFO: Saving dummy bin to " + outputFolder + "\\DummyBinary.bin.";
                 File.WriteAllBytes("DummyBinary.bin", gcn.env.dummyBin); // Requires System.IO
@@ -519,15 +513,13 @@ namespace Asm4GcnGUI
             else
             {
                 MessageBox.Show("Unable to export (see output log)");
-                txtOutput.Text = output;
+                txtOutput.Text = gcn.env.lastMessage;
             }
         }
 
         private void showDummyBinaryToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string output;
-            bool success = gcn.GcnCompile(txtAsm.Text, out output);
-            if (success)
+            if (gcn.GcnCompile(txtAsm.Text))
             {
                 txtOutput.Text = "INFO: Open dummy kernel in notepad.";
                 StringBuilder hex = new StringBuilder();
@@ -542,7 +534,7 @@ namespace Asm4GcnGUI
             else
             {
                 MessageBox.Show("Unable to export (see output log)");
-                txtOutput.Text = output;
+                txtOutput.Text = gcn.env.lastMessage;
             }
         }
 
@@ -560,9 +552,9 @@ namespace Asm4GcnGUI
         {
             MessageBox.Show(this,"Thank you to the following...\n\n"
                 + "AMD for making their GCN ISA manuals available. I spend many hours combing through the ISA documentation and referencing their data tables.  90% of the instruction information was taken directly AMD’s ISA manual.\n\n"
-                + "Ananth for providing OpenCL.Net, an excellent OpenCL wrapper for .Net. One reason I like this library is because the wrappers are very near plain OpenCL and also it is just OpenCL.  His site can be found here: https://openclnet.codeplex.com \n\n"
+                + "Sam Harwell for providing NOpenCL, an excellent OpenCL wrapper for .Net.  I like this OpenCL wrapper because it is very .net like and is also close the core c based OpenCL. The Tunnel Vision Laboratories project can be found here: https://github.com/tunnelvisionlabs\n\n"
                 + "Daniel Bali for building an excellent, easy to follow, open source GCN assembler. This was my first compiler so I was looking for ideas on how to start.  Daniel’s project gave me ideas on how I could tackle this.\n\n"
-                + "Derek Gerstmann for his easy to follow and complete OpenCL example. It is very easy to follow and provides a great example for OpenCL. It has been modified some to fit ASM and C# OpenCL.NET.\n\n"
+                + "Derek Gerstmann for his easy to follow and complete OpenCL example. It is very easy to follow and provides a great example for OpenCL. It has been modified some to fit ASM and C# NOpenCL.\n\n"
                 + "Pavel Torgashov for the FastColoredTextBox editor control. This control adds some syntax highlighting richness to the GUI interface. His project can be found on CodeProject here: http://www.codeproject.com/Articles/161871/Fast-Colored-TextBox-for-syntax-highlighting \n\n"
                 + "Realhet, who built a fully functional and feature rich assembler for windows called HetPas. Much of my GCN assembly skills came from toying with Realhet’s assembler and from reading his posts.  I have been a Realhet fan for a while.  He has made many insightful posts on AMD forums and on his https://realhet.wordpress.com site.\n\n"
                 + "\nFor some reason it feels so old school to put credits in an about box... :-)\n\n"
@@ -636,8 +628,5 @@ namespace Asm4GcnGUI
             lastSelectedTextControl.Focus();
             SendKeys.Send((string)((ToolStripItem)sender).Tag);
         }
-
-
-
     } // end frmMain class
 } //end Asm4GcnGUI namespace

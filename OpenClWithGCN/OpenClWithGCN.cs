@@ -24,7 +24,7 @@ namespace OpenClWithGcnNS
         /// <summary>Stopwatch for tuning code. This is optionally initialized below. If not initialized the times will not show in the log.</summary>
         Stopwatch sw;
 
-        //SetupOpenClEnvironment
+        // Setup OpenClEnvironment
         public OpenClWithGCN(bool EnableStopwatch = false)
         {
             if (EnableStopwatch)
@@ -41,21 +41,20 @@ namespace OpenClWithGcnNS
 
             this.env = env;
         }
-
                 
         /// <summary>
         /// Compiles the source code with _Asm4GCN blocks into a program.
         /// </summary>
         /// <param name="source">The OpenCL Program with _Asm4GCN_ blocks</param>
         /// <returns>returns true if successful </returns>
-        public bool GcnCompile(string source, out string compileLog)
+        public bool GcnCompile(string source)
         {
             StringBuilder log = new StringBuilder();
-            compileLog = "";
+
             /////////// Step: Lets first do any text templates ///////////
             if (!T44.Expand(source, out source))
             {
-                compileLog = "ERROR: There is an error in the text templates [[...]]\r\n" + log;
+                env.lastMessage = "ERROR: There is an error in the text templates [[...]]\r\n";
                 return false;
             }
 
@@ -63,8 +62,8 @@ namespace OpenClWithGcnNS
             bool success = false;
             env.asmBlocks = ExtractAsm4GCNBlocks(source, log, out success);
             if (sw != null) log.AppendFormat("CompileGcnBlocks ms: {0}", sw.ElapsedMilliseconds);
-            if (!success) { compileLog = log.ToString(); return false; }
-            if (env.asmBlocks.Count == 0) { compileLog = "(no GCN assembly found)\r\n"; return false; }
+            if (!success) { env.lastMessage = log.ToString(); return false; }
+            if (env.asmBlocks.Count == 0) { env.lastMessage = "(no GCN assembly found)\r\n"; return false; }
 
             /////////// Step: compile the pulled Asm4GCN blocks to binary and note the byteSize, 
             ///////////        sReg and vReg counts. Blocks are compiled with temporary registers.
@@ -73,51 +72,48 @@ namespace OpenClWithGcnNS
             /////////// Step: compile Asm4GCN Blocks into binary ///////////
             CompileGcnBlocks(log, env.asmBlocks, out success);
             if (sw != null) log.AppendFormat("ExtractAsm4GCNBlocks ms: {0}", sw.ElapsedMilliseconds);
-            if (!success) { compileLog = log.ToString(); return false; }
+            if (!success) { env.lastMessage = log.ToString(); return false; }
 
             /////////// Step: Replace __Asm Blocks with dummy code (using byteSize, sReg and vReg counts above)
             string sourceWithDummyKernels = ReplaceAsm4GCNBlocksWithDummyKernel(source, env.asmBlocks);
             if (sw != null) log.AppendFormat("ReplaceAsm4GCNBlocksWithDummyKernel ms: {0}", sw.ElapsedMilliseconds);
 
-            /////////// Step: Create Program From OpenCl source and dummy kernels
+            /////////// Step: Create Program From OpenCl source with dummy kernels
             success = CreateBinaryFromOpenClSource(sourceWithDummyKernels);
             if (sw != null) log.AppendFormat("Check for any compilation errors ms: {0}", sw.ElapsedMilliseconds);
-            if (!success) { compileLog = log.ToString() + "ERROR: CreateBinaryFromOpenClSource() failed"; return false; }
+            if (!success) { env.lastMessage = log.ToString() + "ERROR: CreateBinaryFromOpenClSource() failed"; return false; }
 
-            /////////// Step: Extract the Binaries from the compiled dummy code
-            success = GetBinariesFromProgram(out env.deviceCt, out env.dummyBin);
+            /////////// Step: Extract the Binaries for the compiled dummy kernels
+            env.dummyBin = env.program.Binaries[0];
             if (sw != null) log.AppendFormat("GetBinariesFromProgram ms: {0}", sw.ElapsedMilliseconds);
-            if (!success) { compileLog = log.ToString() + "ERROR: GetBinariesFromProgram() failed"; return false; }
+            if (!success) { env.lastMessage = log.ToString() + "ERROR: GetBinariesFromProgram() failed"; return false; }
 
             /////////// Step: Replace the Dummy binary code with the compiled GCN binary code
             env.patchedBin = new byte[env.dummyBin.Length];
             Buffer.BlockCopy(env.dummyBin, 0, env.patchedBin, 0, env.dummyBin.Length);
-            InfoBufferArray InfoBufferArrayModified = ReplaceDummyBinaryWithAsm4GCNBinary(env.asmBlocks, env.deviceCt, env.patchedBin);
+            ReplaceDummyBinaryWithAsm4GCNBinary(env.asmBlocks, env.deviceCt, env.patchedBin);
             if (sw != null) log.AppendFormat("Reload the modified Binaries ms: {0}", sw.ElapsedMilliseconds);
 
             /////////// Step: reload the modified Binaries 
-            success = ReloadModifiedBinaries(env.deviceCt, env.patchedBin.Length, ref InfoBufferArrayModified);
-            if (!success) { compileLog = log.ToString(); return false; }
-
-            compileLog = log.ToString();
+            byte[][] bins = {env.patchedBin};
+            ReloadModifiedBinaries(env.deviceCt, env.patchedBin.Length, bins);
+            
+            env.lastMessage = log.ToString();
 
             return true;
         }
 
 
         /// <summary>Reload the modified Binaries</summary>
-        private bool ReloadModifiedBinaries(int deviceCt, int binarySize, ref InfoBufferArray InfoBufferArrayModified)
+        private void ReloadModifiedBinaries(int deviceCt, int binarySize, byte[][] bins)
         {
-            InfoBufferArray<ErrorCode> errCodes = new InfoBufferArray<ErrorCode>(deviceCt);
-            env.program = Cl.CreateProgramWithBinary(env.context, (uint)deviceCt, env.devices, new IntPtr[1] { new IntPtr(binarySize) }, InfoBufferArrayModified, errCodes, out env.err);
-            env.err = Cl.BuildProgram(env.program, 0, null, string.Empty, null, IntPtr.Zero);
-            bool success = CheckForError("Reload the modified Binaries", ref env, sw);
-            return success;
+            env.program = env.context.CreateProgramWithBinary(bins, env.devices);
+            env.program.Build();
         }
 
 
         /// <summary>Replace the Dummy binary code with the compiled GCN binary code</summary>
-        private InfoBufferArray ReplaceDummyBinaryWithAsm4GCNBinary(List<AsmBlock> asmBlocks, int deviceCt, byte[] dummyBinary)
+        private void ReplaceDummyBinaryWithAsm4GCNBinary(List<AsmBlock> asmBlocks, int deviceCt, byte[] dummyBinary)
         {
             foreach (AsmBlock asmBlock in asmBlocks)
             {
@@ -131,65 +127,29 @@ namespace OpenClWithGcnNS
                 {
                     byte[] bin = asmBlock.bin;
                     for (int i = 0; i < bin.Length; i++)
-                        dummyBinary[start + i] = bin[i];
+                        dummyBinary[start + i] = bin[i]; //todo: bytecopy instead?
                 }
                 else
                     Console.WriteLine("Unable to find Asm4GCN block {0} - this could be cause by unsupported driver version", asmBlock.funcName);
             }
             if (sw != null) Console.WriteLine("Modify Binaries ms: {0}", sw.ElapsedMilliseconds);
-
-            InfoBuffer[] binariesModifiedBuffer = new InfoBuffer[deviceCt];
-            binariesModifiedBuffer[0] = new InfoBuffer(dummyBinary); //2048/*size*/ //new IntPtr(binaries.Length)
-            InfoBufferArray InfoBufferArrayModified = new InfoBufferArray(binariesModifiedBuffer);
-            return InfoBufferArrayModified;
-        }
-
-        /// <summary>Extract the Binaries from the compiled code</summary>
-        private bool GetBinariesFromProgram(out int deviceCt, out byte[] binary)
-        {
-            bool success = true;
-            deviceCt = Cl.GetProgramInfo(env.program, ProgramInfo.NumDevices, out env.err).CastTo<int>();
-            success &= CheckForError("GetProgramInfo-NumDevices", ref env, sw);
-
-            int[] binarySizeForEachDevice = Cl.GetProgramInfo(env.program, ProgramInfo.BinarySizes, out env.err).CastToArray<int>(deviceCt);
-            success &= CheckForError("GetProgramInfo-BinarySizes", ref env, sw);
-
-            InfoBuffer[] tempInfoBuffers = new InfoBuffer[deviceCt];
-            for (int i = 0; i < deviceCt; i++)
-                tempInfoBuffers[i] = new InfoBuffer(new IntPtr(binarySizeForEachDevice[i]/*size*/));
-
-            InfoBufferArray binaryBuf = new InfoBufferArray(tempInfoBuffers);
-            IntPtr nbread = new IntPtr();
-
-            env.err = Cl.GetProgramInfo(env.program, ProgramInfo.Binaries, new IntPtr(4/*unsigned char* */ * deviceCt), binaryBuf, out nbread);
-            success &= CheckForError("GetProgramInfo-Binaries", ref env, sw);
-
-            binary = binaryBuf[0].CastToArray<byte>(binarySizeForEachDevice[0]);
-
-            return success;
         }
 
 
         /// <summary>Create Program From OpenCl source and dummy kernels</summary>
         private bool CreateBinaryFromOpenClSource(string sourceWithDummys)
         {
-            env.program = Cl.CreateProgramWithSource(env.context, 1, new[] { sourceWithDummys }, null, out env.err);
+            env.program = env.context.CreateProgramWithSource(sourceWithDummys);
             if (sw != null) Console.WriteLine("CreateProgramWithSource ms: {0}", sw.ElapsedMilliseconds);
-
-            env.err = Cl.BuildProgram(env.program, 0, null, string.Empty, null, IntPtr.Zero);  //"-cl-mad-enable"
+            
+            env.program.Build(); 
             if (sw != null) Console.WriteLine("BuildProgram ms: {0}", sw.ElapsedMilliseconds);
+            
+            BuildStatus bs = env.program.GetBuildStatus(env.program.Devices[0]);
+            if (bs != BuildStatus.Success)
+                Console.WriteLine("\nError in GetProgramBuildInfo: " + env.program.GetBuildLog(env.program.Devices[0]));
 
-            //Check for any compilation errors
-            //if (ErrorCode.Success != env.err)
-            //    Console.WriteLine("\nCompile Error: " +  Cl.GetProgramBuildInfo(env.device, ProgramBuildInfo.Options, out env.err));
-
-            bool success = Cl.GetProgramBuildInfo(env.program, env.devices[0], ProgramBuildInfo.Status, out env.err)
-                .CastTo<BuildStatus>() == BuildStatus.Success;
-            if (!success)
-                Console.WriteLine("\nError in GetProgramBuildInfo: " + 
-                    Cl.GetProgramBuildInfo(env.program,env.devices[0], ProgramBuildInfo.Log, out env.err));
-
-            return success;
+            return (bs == BuildStatus.Success);
         }
 
 
@@ -325,7 +285,7 @@ namespace OpenClWithGcnNS
                 string emptyHeaderLines = new String('\n', blk.newlineCtInHeader);
 
                 string Asm4GCNSource = emptyHeaderLines
-                    //+String.Concat(from v in blk.paramVars select "#REF "+v.gcnType+" "+v.name+"; ") //for future inline
+                    //+String.Concat(from v in blk.paramVars select "#REF "+v.gcnType+" "+v.name+"; ") //future: for inline
                     + blk.codeBlock;
 
                 string[] srcLines = Asm4GCNSource.Split(new string[] { "\n", "\r\n" }, StringSplitOptions.None);
@@ -340,17 +300,6 @@ namespace OpenClWithGcnNS
 
                 log.Append(blk.compileLog);
             }
-            return success;
-        }
-
-        private static bool CheckForError(string functionName, ref OpenClEnvironment env, Stopwatch sw = null)
-        {
-            bool success = (env.err == ErrorCode.Success);
-            if (!success)
-                Console.WriteLine("Error in {0}: {1}", functionName, env.err);
-            else if (sw != null) 
-                Console.WriteLine("{0} ms: {1}", functionName, sw.ElapsedMilliseconds);
-            
             return success;
         }
 
@@ -425,7 +374,8 @@ namespace OpenClWithGcnNS
         /// <summary>Outputs some general GPU information in text format.</summary>
         public static string CheckGPUAndVersion()
         {
-            Version[] testedOK = new Version[]   //should be sorted
+            // Create a list of valid versions. The list must be sorted.
+            Version[] testedOK = new Version[]   
             {
                 Version.Parse("13.251.9001.0"),
                 Version.Parse("14.501.1003.0")
@@ -470,12 +420,12 @@ namespace OpenClWithGcnNS
                         msg.AppendLine("INFO: Found GPU with GCN - " + desc);
                     }
                     else if (Regex.Match(desc,
-                        @"((AMD|ATI)\s+FirePro\s+(2270|2460|A300|3800|V[345789][89]00)\s.*?)" +                 //No FirePro support GCN
-                        @"|(AMD FireStream 93[57]0\s.*?)" +                                                     //No FireStream 93xx support GCN
-                        @"|((AMD|ATI|VisionTek)\s+(Mobility\s+)?Radeon\s+(HD\s+)?5[0456789]\d0(X2)?[\s/].*?)" + //No 5000 support GCN
-                        @"|((AMD|ATI)\s+Radeon\s+(HD\s+)?E?6[2-9]\d0[DGMA]?[\s/].*?)" +                         //No 6000 support GCN
-                        @"|((AMD|ATI)\s+Radeon\s+(HD\s+)?7[03456]\d0[DGM]?[\s/].*?)" +                          //No 7000-7600 support GCN
-                        @"|((AMD\s+)?Radeon\s+(R5\s+)2[123][05]X?[\s/].*?)").Success)                           //No 200-235 support GCN
+                        @"((AMD|ATI)\s+FirePro\s+(2270|2460|A300|3800|V[345789][89]00)\s.*?)" +                 // No FirePro support GCN
+                        @"|(AMD FireStream 93[57]0\s.*?)" +                                                     // No FireStream 93xx support GCN
+                        @"|((AMD|ATI|VisionTek)\s+(Mobility\s+)?Radeon\s+(HD\s+)?5[0456789]\d0(X2)?[\s/].*?)" + // No 5000 support GCN
+                        @"|((AMD|ATI)\s+Radeon\s+(HD\s+)?E?6[2-9]\d0[DGMA]?[\s/].*?)" +                         // No 6000 support GCN
+                        @"|((AMD|ATI)\s+Radeon\s+(HD\s+)?7[03456]\d0[DGM]?[\s/].*?)" +                          // No 7000-7600 support GCN
+                        @"|((AMD\s+)?Radeon\s+(R5\s+)2[123][05]X?[\s/].*?)").Success)                           // No 200-235 support GCN
                     {
                         msg.AppendLine("ERROR: GPU does not support GCN (" + desc + ")");
                     }
@@ -485,7 +435,7 @@ namespace OpenClWithGcnNS
                     }
 
                 }
-            } //end foreach VideoController
+            } // end foreach VideoController
 
             if (!anyAmdGpuFound)
                 msg.AppendLine("ERROR: No known AMD GPU found. ");
@@ -532,19 +482,19 @@ namespace OpenClWithGcnNS
         private static int ByteSearch(byte[] searchIn, byte[] searchBytes, byte[] maskBytes, int start = 0)
         {
             bool matched = false;
-            //only look at this if we have a populated search array and search bytes with a sensible start
+            // only look at this if we have a populated search array and search bytes with a sensible start
             if (searchIn.Length > 0
                 && searchBytes.Length > 0
                 && start <= (searchIn.Length - searchBytes.Length)
                 && searchIn.Length >= searchBytes.Length)
             {
-                //iterate through the array to be searched
+                // iterate through the array to be searched
                 for (int i = start; i <= searchIn.Length - searchBytes.Length; i++)
                 {
-                    //if the start bytes match we will start comparing all other bytes
+                    // if the start bytes match we will start comparing all other bytes
                     if ((maskBytes[0] & searchIn[i]) == (maskBytes[0] & searchBytes[0])) 
                     {
-                        //multiple bytes to be searched we have to compare byte by byte
+                        // multiple bytes to be searched we have to compare byte by byte
                         matched = true;
                         for (int y = 1; y <= searchBytes.Length - 1; y++)
                             if ((maskBytes[y] & searchIn[i+y]) != (maskBytes[y] & searchBytes[y]))
@@ -554,7 +504,7 @@ namespace OpenClWithGcnNS
                             }
 
                         if (matched)
-                            return i; //everything matched up
+                            return i; // everything matched up
                     }
                 }
             }

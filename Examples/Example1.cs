@@ -7,16 +7,11 @@ namespace TestNS
 {
     static class Example1
     {
-        // The example below is an OpenCL example by Derek Gerstmann(UWA). It's been modified for OpenCL.Net use.
+        // The example below is an OpenCL example by Derek Gerstmann(UWA). It's been modified for NOpenCL use.
         public static void Run()
         {
-            string log;
-            ErrorCode err;
-            Event lastEvent;
-            IntPtr nullPtr;
-
             /************ Create and build a program from our OpenCL-C source code ***************/
-            //const string source = GCN_NS.Code.DevCode;
+            // const string source = GCN_NS.Code.DevCode;
 
             string source = @"
                 __asm4GCN myAsmFunc ( float*, float*)
@@ -59,10 +54,10 @@ namespace TestNS
 
             /************ Initialize OpenClWithGCN    ***************************************/
             // OpenClEnvironment env = SetupOpenClEnvironment(); // for manual setup
-            OpenClWithGCN gprog = new OpenClWithGCN(); 
-            OpenClEnvironment env = gprog.env;  // Let just use the built in environment
-            bool success = gprog.GcnCompile(source, out log);
-            Console.Write(log);
+            OpenClWithGCN gprog = new OpenClWithGCN();
+            OpenClEnvironment env = gprog.env;  // Let just use the default environment
+            bool success = gprog.GcnCompile(source);
+            Console.Write(env.lastMessage);
             if (!success) return;
 
             /************ Create some random data   *******************************************/
@@ -73,78 +68,46 @@ namespace TestNS
             float[] data = (from i in Enumerable.Range(0, count) select (float)random.NextDouble()).ToArray();
 
             /************ Create a kernel from our modProgram    *******************************/
-            Kernel kernel = Cl.CreateKernel(env.program, "myAsmFunc", out err); //myOpenClFunc myAsmFunc
-            if (GetError(err, "CreateKernel()")) return;
+            Kernel kernel = env.program.CreateKernel("myAsmFunc");
 
             /************ Allocate cl_input, and fill with data ********************************/
             // OpenCL: cl_mem cl_input = clCreateBuffer(context, CL_MEM_READ_ONLY, dataSz, host_ptr, NULL);
-            IMem cl_input = Cl.CreateBuffer(env.context, MemFlags.ReadOnly, dataSz, out err);
-            if (GetError(err, "CreateBuffer()")) return;
+            Mem cl_input = env.context.CreateBuffer(MemoryFlags.ReadOnly, dataSz);
 
             /************ Create an cl_output memory buffer for our results    *****************/
             // OpenCL: cl_mem cl_output = clCreateBuffer(context, CL_MEM_WRITE_ONLY, dataSz, host_ptr, NULL);
-            IMem cl_output = (Mem)Cl.CreateBuffer(env.context, MemFlags.WriteOnly, dataSz, out err);
-            if (GetError(err, "CreateBuffer()")) return;
+            Mem cl_output = env.context.CreateBuffer(MemoryFlags.WriteOnly, dataSz);
 
             /************ Copy our host buffer of random values to cl_input device buffer ******/
             // OpenCL: clEnqueueWriteBuffer(cmdQueue, cl_input, CL_TRUE, 0, dataSz, data, 0, NULL, NULL);
-            err = Cl.EnqueueWriteBuffer(env.cmdQueue, cl_input, Bool.True, IntPtr.Zero,
-                new IntPtr(dataSz), data, 0, null, out lastEvent);
-            if (GetError(err, "EnqueueWriteBuffer()")) return;
-
-            /************ Get the max number of work items supported for this kernel/device ****/
-            // OpenCL: clGetKernelWorkGroupInfo(kernel,dev,CL_KERNEL_WORK_GROUP_SIZE,sizeof(int),&local,NULL);
-            InfoBuffer local = new InfoBuffer(new IntPtr(4));
-            err = Cl.GetKernelWorkGroupInfo(kernel, env.devices[0], KernelWorkGroupInfo.WorkGroupSize,
-                new IntPtr(sizeof(int)), local, out nullPtr);
-            if (GetError(err, "GetKernelWorkGroupInfo()")) return;
+            env.cmdQueue.EnqueueWriteBuffer(cl_input, true, 0, dataSz, data);
 
             /************ Set the arguments to our kernel, and enqueue it for execution ********/
-            // OpenCL Version: clSetKernelArg(kernel, 0, sizeof(cl_mem), &cl_input);
-            // OpenCL Version: clSetKernelArg(kernel, 1, sizeof(cl_mem), &cl_output);
-            // OpenCL Version: clSetKernelArg(kernel, 2, sizeof(unsigned int), &count);
-            err = Cl.SetKernelArg(kernel, 0, new IntPtr(4), cl_input);
-            if (GetError(err, "SetKernelArg()")) return;
-            err = Cl.SetKernelArg(kernel, 1, new IntPtr(4), cl_output);
-            if (GetError(err, "SetKernelArg()")) return;
-            IntPtr[] workGroupSizePtr = new IntPtr[] { new IntPtr(count) };
-            IntPtr[] localGroupSizePtr = null;//must be null if reqd_work_group_size attribute is used in src
-            //IntPtr[] localGroupSizePtr = new IntPtr[] {new IntPtr(256), new IntPtr(1), new IntPtr(1)}; 
+            // OpenCL: clSetKernelArg(kernel, 0, sizeof(cl_mem), &cl_input);
+            kernel.Arguments[0].SetValue(cl_input);
+            kernel.Arguments[1].SetValue(cl_output);
 
             /************ Enqueue and run the kernel *******************************************/
             // OpenCL: clEnqueueNDRangeKernel(cmdQueue, kernel, 1, NULL, &globalMem  &localMem, 0, NULL,NULL);
-            err = Cl.EnqueueNDRangeKernel(env.cmdQueue, kernel, 1, null, workGroupSizePtr,
-                localGroupSizePtr, 0, null, out lastEvent);
-            if (GetError(err, "EnqueueNDRangeKernel()")) return;
+            env.cmdQueue.EnqueueNDRangeKernel(kernel, count, 256);
 
             /************ Force command queue to get processed, wait until all commands finish **/
-            env.err = Cl.Finish(env.cmdQueue);
-            if (GetError(err, "Finish()")) return;
+            env.cmdQueue.Finish();
 
             /************ Read back the results ************************************************/
             // OpenCL: clEnqueueReadBuffer(cmdQueue, cl_output, CL_TRUE, 0, dataSz, results, 0, NULL, NULL); 
             float[] results = new float[count];
-            env.err = Cl.EnqueueReadBuffer(env.cmdQueue, cl_output, Bool.True, IntPtr.Zero,
-                new IntPtr(dataSz), results, 0, null, out lastEvent);
-            if (GetError(err, "EnqueueReadBuffer()")) return;
+            env.cmdQueue.EnqueueReadBufferAndWait(cl_output, results, dataSz);
 
             /************ Validate our results *************************************************/
             int correct = 0;
             for (int i = 0; i < count; i++)
                 correct += (results[i] == data[i] + data[i]) ? 1 : 0;
-            int matches = Enumerable.Range(0, 10).Select(i => 100 + 10 * i).ToArray().Count();
+            // int correct = Enumerable.Range(0,count).Select(i=>results[i]==data[i]*2).Count();
 
             /************ Print a brief summary detailing the results **************************/
             Console.WriteLine("{0} - Computed {1}/{2} correct values!",
-                correct==count?"PASS":"FAIL", correct.ToString(), count.ToString());
-        }
-
-        private static bool GetError(ErrorCode err, string errorWith = "")
-        {
-            bool Success = (err == ErrorCode.Success);
-            if (!Success)
-                Console.WriteLine("ERROR: {0} generated {1}", errorWith, err);
-            return (!Success);
+                correct == count ? "PASS" : "FAIL", correct.ToString(), count.ToString());
         }
     }
 }
