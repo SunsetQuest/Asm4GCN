@@ -1,4 +1,6 @@
-﻿// Source: http://www.codeproject.com/Articles/867045/Csharp-Based-Template-Transformation-Engine
+﻿// Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
+// Source: http://www.codeproject.com/Articles/867045/Csharp-Based-Template-Transformation-Engine
+
 using System;
 
 namespace OpenClWithGcnNS

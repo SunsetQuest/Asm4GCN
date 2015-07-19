@@ -551,8 +551,8 @@ namespace Asm4GcnGUI
         private void creditsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show(this,"Thank you to the following...\n\n"
-                + "AMD for making their GCN ISA manuals available. I spend many hours combing through the ISA documentation and referencing their data tables.  90% of the instruction information was taken directly AMD’s ISA manual.\n\n"
-                + "Sam Harwell for providing NOpenCL, an excellent OpenCL wrapper for .Net.  I like this OpenCL wrapper because it is very .net like and is also close the core c based OpenCL. The Tunnel Vision Laboratories project can be found here: https://github.com/tunnelvisionlabs\n\n"
+                + "AMD for making their GCN ISA manuals available. I spend many hours combing through the ISA documentation and referencing their data tables. 90% of the instruction information was taken directly AMD’s ISA manual.\n\n"
+                + "Sam Harwell for providing NOpenCL, an excellent OpenCL wrapper for .Net. I like this OpenCL wrapper because it is very .net like and is also close the core c based OpenCL. The Tunnel Vision Laboratories project can be found here: https://github.com/tunnelvisionlabs\n\n"
                 + "Daniel Bali for building an excellent, easy to follow, open source GCN assembler. This was my first compiler so I was looking for ideas on how to start.  Daniel’s project gave me ideas on how I could tackle this.\n\n"
                 + "Derek Gerstmann for his easy to follow and complete OpenCL example. It is very easy to follow and provides a great example for OpenCL. It has been modified some to fit ASM and C# NOpenCL.\n\n"
                 + "Pavel Torgashov for the FastColoredTextBox editor control. This control adds some syntax highlighting richness to the GUI interface. His project can be found on CodeProject here: http://www.codeproject.com/Articles/161871/Fast-Colored-TextBox-for-syntax-highlighting \n\n"

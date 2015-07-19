@@ -1,6 +1,7 @@
 ﻿// Asm4GCN Assembler by Ryan S White (sunsetquest) http://www.codeproject.com/Articles/872477/Assembler-for-AMD-s-GCN-GPU
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without any warranty.
+
 using NOpenCL;
 using System;
 using System.Collections.Generic;

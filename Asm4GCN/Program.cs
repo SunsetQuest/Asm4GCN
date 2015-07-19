@@ -116,7 +116,6 @@ namespace GcnTools
                     for (int i = 0; i < vRegUsage.Count; i++)
                         log.WriteLine("{1} Vector reg(s) of size {0} needed", vRegUsage[i].regSize, vRegUsage[i].timesUsed);
                     //log.WriteLine("Line # on last S Reg increase: {0}", sRegUsageCalc.lineOnLastPoolIncrease);
-
                 }
 
                 // Lets save the regUsage to a file

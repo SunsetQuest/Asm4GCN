@@ -13,6 +13,46 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
+
+//Important differences between Generation 2 and 3 GPUs
+// Data Parallel ALU operations improve “Scan” and cross-lane operations.
+// Scalar memory writes.
+// In Generation 2, a kernel can read and WRITE to scalar data cache.
+// Compute kernel context switching.
+// Compute kernels now can be context-switched on and off the GPU.
+
+//Summary of kernel instruction change from Generation 2 to 3
+//  Modified many of the microcode formats: VOP3A, VOP3B, LDS, GDS MUBUF, MTBUF, MIMG, and EXP.
+//  SMRD microcode format is replaced with SMEM, now supporting reads and writes.  [DONE]
+//  VGPR Indexing for VALU instructions.
+
+//New Instructions
+//– Scalar Memory Writes.
+//– S_CMP_EQ_U64, S_CMP_NE_U64.
+//– 16-bit floating point VALU instructions.
+//– “SDWA” – Sub Dword Addressing allows access to bytes and words of VGPRs in VALU instructions.
+//– “DPP” – Data Parallel Processing allows VALU instructions to access data from neighboring lanes.
+//– V_PERM_B32.
+//– DS_PERMUTE_RTN_B32, DS_BPERMPUTE_RTN_B32.
+// Removed Instructions
+//– V_MAC_LEGACY_F32
+//– V_CMPS* - now supported by V_CMP with the “clamp” bit set to 1.
+//– V_MULLIT_F32.
+//– V_{MIN, MAX, RCP, RSQ}_F32.
+//– V_{LOG, RCP, RSQ}_CLAMP_F32.
+//– V_{RCP, RSQ}_CLAMP_F64.
+//– V_MUL_LO_I32 (it’s functionally identical to V_MUL_LO_U32).
+//– All non-reverse shift instructions.
+//– LDS and Memory atomics: MIN, MAX and CMPSWAP on F32 and F64 data.
+
+//– snorm_lz (aka: snorm_ogl)
+//– ubnorm
+//– ubnorm_nz (aka: ubnorm_ogl)
+//– ubint
+//– ubscaled
+
+
+
 namespace GcnTools
 {
     /// <summary>
@@ -27,7 +67,7 @@ namespace GcnTools
         SOPK,
         SOPC,
         SOPP,
-        SMRD,
+        SMEM,
         VOP1,
         VOP2,
         VOP3a0,
@@ -754,11 +794,11 @@ new InstInfo(0366, "s_bitset1_b64", "s4[biu]", "s8b", "none", "none", "none", "n
 new InstInfo(0367, "s_branch", "none", "none", "none", "none", "none", "16i", "none", 1, 1, @"PC = PC + signext(SIMM16 * 4) + 4.", @"", ISA_Enc.SOPP, 2, 0, 0xBF820000, 0x0600),
 new InstInfo(0368, "s_brev_b32", "s4b", "s4b", "none", "none", "none", "none", "none", 2, 2, @"D.u = S0.u[0:31] (reverse bits).", @"", ISA_Enc.SOP1, 11, 0, 0xBE800B00, 0x0081),
 new InstInfo(0369, "s_brev_b64", "s8b", "s8b", "none", "none", "none", "none", "none", 2, 2, @"D.u = S0.u[0:63] (reverse bits).", @"", ISA_Enc.SOP1, 12, 0, 0xBE800C00, 0x0081),
-new InstInfo(0370, "s_buffer_load_dword", "s4b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read one Dword from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)", @"", ISA_Enc.SMRD, 8, 0, 0xC2000000, 0x0001),
-new InstInfo(0371, "s_buffer_load_dwordx16", "s64b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read 16 Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>. . .<br>SGPR[SDST + 15] = read_dword_from_kcache(m_base, m_offset + 60, m_size)", @"", ISA_Enc.SMRD, 12, 0, 0xC3000000, 0x0001),
-new InstInfo(0372, "s_buffer_load_dwordx2", "s8b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)", @"", ISA_Enc.SMRD, 9, 0, 0xC2400000, 0x0001),
-new InstInfo(0373, "s_buffer_load_dwordx4", "s16b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read four Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>SGPR[SDST + 3] = read_dword_from_kcache(m_base, m_offset + 12, m_size)", @"", ISA_Enc.SMRD, 10, 0, 0xC2800000, 0x0001),
-new InstInfo(0374, "s_buffer_load_dwordx8", "s32b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read eight Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>. . .<br>SGPR[SDST + 7] = read_dword_from_kcache(m_base, m_offset + 28, m_size)", @"", ISA_Enc.SMRD, 11, 0, 0xC2C00000, 0x0001),
+new InstInfo(0370, "s_buffer_load_dword", "s4b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read one Dword from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)", @"", ISA_Enc.SMEM, 8, 0, 0xC2000000, 0x0001),
+new InstInfo(0371, "s_buffer_load_dwordx16", "s64b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read 16 Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>. . .<br>SGPR[SDST + 15] = read_dword_from_kcache(m_base, m_offset + 60, m_size)", @"", ISA_Enc.SMEM, 12, 0, 0xC3000000, 0x0001),
+new InstInfo(0372, "s_buffer_load_dwordx2", "s8b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)", @"", ISA_Enc.SMEM, 9, 0, 0xC2400000, 0x0001),
+new InstInfo(0373, "s_buffer_load_dwordx4", "s16b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read four Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>SGPR[SDST + 3] = read_dword_from_kcache(m_base, m_offset + 12, m_size)", @"", ISA_Enc.SMEM, 10, 0, 0xC2800000, 0x0001),
+new InstInfo(0374, "s_buffer_load_dwordx8", "s32b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read eight Dwords from read-only memory describe by a buffer a constant (V#) through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_base = { SGPR[SBASE * 2 +1][15:0], SGPR[SBASE * 2] }<br>m_stride = SGPR[SBASE * 2 +1][31:16]<br>m_num_records = SGPR[SBASE * 2 + 2]<br>m_size = (m_stride == 0) ? 1 : m_num_records<br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_base, m_offset, m_size)<br>SGPR[SDST + 1] = read_dword_from_kcache(m_base, m_offset + 4, m_size)<br>SGPR[SDST + 2] = read_dword_from_kcache(m_base, m_offset + 8, m_size)<br>. . .<br>SGPR[SDST + 7] = read_dword_from_kcache(m_base, m_offset + 28, m_size)", @"", ISA_Enc.SMEM, 11, 0, 0xC2C00000, 0x0001),
 new InstInfo(0375, "s_cbranch_cdbgsys", "none", "none", "none", "none", "none", "16i", "none", 1, 1, @"Conditional branch when the SYStem debug bit is set.<br>if(conditional_debug_system != 0) then PC = PC + signext(SIMM16 * 4) + 4; else NOP.", @"", ISA_Enc.SOPP, 23, 0, 0xBF970000, 0x0600),
 new InstInfo(0376, "s_cbranch_cdbgsys_and_user", "none", "none", "none", "none", "none", "16i", "none", 1, 1, @"Conditional branch when both the SYStem and USER debug bits are set.<br>if(conditional_debug_system && conditional_debug_user) then PC = PC + signext(SIMM16 * 4) + 4; else NOP.", @"", ISA_Enc.SOPP, 26, 0, 0xBF9A0000, 0x0600),
 new InstInfo(0377, "s_cbranch_cdbgsys_or_user", "none", "none", "none", "none", "none", "16i", "none", 1, 1, @"Conditional branch when either the SYStem or USER debug bits are set.<br>if(conditional_debug_system || conditional_debug_user) then PC = PC + signext(SIMM16 * 4) + 4; else NOP.", @"", ISA_Enc.SOPP, 25, 0, 0xBF990000, 0x0600),
@@ -801,8 +841,8 @@ new InstInfo(0413, "s_cmpk_lt_i32", "s4i", "none", "none", "none", "none", "s16"
 new InstInfo(0414, "s_cmpk_lt_u32", "s4u", "none", "none", "none", "none", "u16", "none", 2, 2, @"SCC = (D.u < SIMM16).", @"", ISA_Enc.SOPK, 13, 0, 0xB6800000, 0x0080),
 new InstInfo(0415, "s_cselect_b32", "s4b", "s4b", "s4b", "scc", "none", "none", "none", 4, 4, @"D.u = SCC ? S0.u : S1.u.", @"", ISA_Enc.SOP2, 10, 0, 0x85000000, 0x0101),
 new InstInfo(0416, "s_cselect_b64", "s8b", "s8b", "s8b", "scc", "none", "none", "none", 4, 4, @"D.u = SCC ? S0.u : S1.u.", @"", ISA_Enc.SOP2, 11, 0, 0x85800000, 0x0101),
-new InstInfo(0417, "s_dcache_inv", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"Invalidate entire L1 constant cache.", @"", ISA_Enc.SMRD, 31, 0, 0xC7C00000, 0x0000),
-new InstInfo(0418, "s_dcache_inv_vol", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"Invalidate all volatile lines in L1 constant cache.", @"", ISA_Enc.SMRD, 29, 0, 0xC7400000, 0x0000),
+new InstInfo(0417, "s_dcache_inv", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"Invalidate entire L1 constant cache.", @"", ISA_Enc.SMEM, 31, 0, 0xC7C00000, 0x0000),
+new InstInfo(0418, "s_dcache_inv_vol", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"Invalidate all volatile lines in L1 constant cache.", @"", ISA_Enc.SMEM, 29, 0, 0xC7400000, 0x0000),
 new InstInfo(0419, "s_decperflevel", "none", "none", "none", "none", "none", "4u", "none", 1, 1, @"Decrement performance counter specified in SIMM16[3:0] by 1.", @"", ISA_Enc.SOPP, 21, 0, 0xBF950000, 0x0000),
 new InstInfo(0420, "s_endpgm", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"End of program; terminate wavefront.", @"", ISA_Enc.SOPP, 1, 0, 0xBF810000, 0x0000),
 new InstInfo(0421, "s_ff0_i32_b32", "s4i", "s4b", "none", "none", "none", "none", "none", 2, 2, @"D.i = FindFirstZero(S0.u) from LSB; if no zeros, return -1.", @"", ISA_Enc.SOP1, 17, 0, 0xBE801100, 0x0001),
@@ -817,18 +857,18 @@ new InstInfo(0429, "s_getpc_b64", "s8u", "none", "none", "none", "none", "none",
 new InstInfo(0430, "s_getreg_b32", "s4b", "none", "none", "none", "none", "b16", "none", 2, 2, @"D.u = hardware register. Read some or all of a hardware register into the LSBs of D. See Table 5.7 on page 5-7. SIMM16 = {size[4:0], offset[4:0], hwRegId[5:0]}; offset is in the range from 0 to 31, size is in the range from 1 to 32.", @"", ISA_Enc.SOPK, 18, 0, 0xB9000000, 0x0000),
 new InstInfo(0431, "s_icache_inv", "none", "none", "none", "none", "none", "none", "none", 0, 0, @"Invalidate entire L1 instruction cache.", @"", ISA_Enc.SOPP, 19, 0, 0xBF930000, 0x0000),
 new InstInfo(0432, "s_incperflevel", "none", "none", "none", "none", "none", "4u", "none", 1, 1, @"Increment performance counter specified in SIMM16[3:0] by 1.", @"", ISA_Enc.SOPP, 20, 0, 0xBF940000, 0x0000),
-new InstInfo(0433, "s_load_dword", "s4b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)", @"", ISA_Enc.SMRD, 0, 0, 0xC0000000, 0x0001),
-new InstInfo(0434, "s_load_dwordx16", "s64b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read 16 Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>. . .<br>SGPR[SDST+15] = read_dword_from_kcache(m_addr+60)", @"", ISA_Enc.SMRD, 4, 0, 0xC1000000, 0x0001),
-new InstInfo(0435, "s_load_dwordx2", "s8b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)", @"", ISA_Enc.SMRD, 1, 0, 0xC0400000, 0x0001),
-new InstInfo(0436, "s_load_dwordx4", "s16b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read four Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>SGPR[SDST+3] = read_dword_from_kcache(m_addr+12)", @"", ISA_Enc.SMRD, 2, 0, 0xC0800000, 0x0001),
-new InstInfo(0437, "s_load_dwordx8", "s32b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read eight Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>. . .<br>SGPR[SDST+7] = read_dword_from_kcache(m_addr+28)", @"", ISA_Enc.SMRD, 3, 0, 0xC0C00000, 0x0001),
+new InstInfo(0433, "s_load_dword", "s4b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)", @"", ISA_Enc.SMEM, 0, 0, 0xC0000000, 0x0001),
+new InstInfo(0434, "s_load_dwordx16", "s64b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read 16 Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>. . .<br>SGPR[SDST+15] = read_dword_from_kcache(m_addr+60)", @"", ISA_Enc.SMEM, 4, 0, 0xC1000000, 0x0001),
+new InstInfo(0435, "s_load_dwordx2", "s8b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read two Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)", @"", ISA_Enc.SMEM, 1, 0, 0xC0400000, 0x0001),
+new InstInfo(0436, "s_load_dwordx4", "s16b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read four Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>SGPR[SDST+3] = read_dword_from_kcache(m_addr+12)", @"", ISA_Enc.SMEM, 2, 0, 0xC0800000, 0x0001),
+new InstInfo(0437, "s_load_dwordx8", "s32b", "s4u", "none", "none", "none", "none", "none", 2, 3, @"Read eight Dwords from read-only constant memory through the constant cache (kcache).<br>m_offset = IMM ? OFFSET : SGPR[OFFSET] <br>m_addr = (SGPR[SBASE * 2] + m_offset) & ~0x3<br>SGPR[SDST] = read_dword_from_kcache(m_addr)<br>SGPR[SDST+1] = read_dword_from_kcache(m_addr+4)<br>SGPR[SDST+2] = read_dword_from_kcache(m_addr+8)<br>. . .<br>SGPR[SDST+7] = read_dword_from_kcache(m_addr+28)", @"", ISA_Enc.SMEM, 3, 0, 0xC0C00000, 0x0001),
 new InstInfo(0438, "s_lshl_b32", "s4b", "s4b", "s4b", "none", "none", "none", "none", 3, 3, @"D.u = S0.u << S1.u[4:0]. SCC = 1 if result is non-zero.", @"", ISA_Enc.SOP2, 30, 0, 0x8F000000, 0x0081),
 new InstInfo(0439, "s_lshl_b64", "s8b", "s8b", "s8b", "none", "none", "none", "none", 3, 3, @"D.u = S0.u << S1.u[5:0]. SCC = 1 if result is non-zero.", @"", ISA_Enc.SOP2, 31, 0, 0x8F800000, 0x0081),
 new InstInfo(0440, "s_lshr_b32", "s4b", "s4b", "s4b", "none", "none", "none", "none", 3, 3, @"D.u = S0.u >> S1.u[4:0]. SCC = 1 if result is non-zero.", @"", ISA_Enc.SOP2, 32, 0, 0x90000000, 0x0081),
 new InstInfo(0441, "s_lshr_b64", "s8b", "s8b", "s8b", "none", "none", "none", "none", 3, 3, @"D.u = S0.u >> S1.u[5:0]. SCC = 1 if result is non-zero.", @"", ISA_Enc.SOP2, 33, 0, 0x90800000, 0x0081),
 new InstInfo(0442, "s_max_i32", "s4i", "s4i", "s4i", "none", "none", "none", "none", 3, 3, @"D.i = (S0.i > S1.i) ? S0.i : S1.i. SCC = 1 if S0 is max.", @"", ISA_Enc.SOP2, 8, 0, 0x84000000, 0x0081),
 new InstInfo(0443, "s_max_u32", "s4u", "s4u", "s4u", "none", "none", "none", "none", 3, 3, @"D.u = (S0.u > S1.u) ? S0.u : S1.u. SCC = 1 if S0 is max.", @"", ISA_Enc.SOP2, 9, 0, 0x84800000, 0x0081),
-new InstInfo(0444, "s_memtime", "s8u", "none", "none", "none", "none", "none", "none", 1, 1, @"Return current 64-bit timestamp.This 'time' is a free-running clock counter based on the shader core clock.", @"", ISA_Enc.SMRD, 30, 0, 0xC7800000, 0x0000),
+new InstInfo(0444, "s_memtime", "s8u", "none", "none", "none", "none", "none", "none", 1, 1, @"Return current 64-bit timestamp.This 'time' is a free-running clock counter based on the shader core clock.", @"", ISA_Enc.SMEM, 30, 0, 0xC7800000, 0x0000),
 new InstInfo(0445, "s_min_i32", "s4i", "s4i", "s4i", "none", "none", "none", "none", 3, 3, @"D.i = (S0.i < S1.i) ? S0.i : S1.i. SCC = 1 if S0 is min.", @"", ISA_Enc.SOP2, 6, 0, 0x83000000, 0x0081),
 new InstInfo(0446, "s_min_u32", "s4u", "s4u", "s4u", "none", "none", "none", "none", 3, 3, @"D.u = (S0.u < S1.u) ? S0.u : S1.u. SCC = 1 if S0 is min.", @"", ISA_Enc.SOP2, 7, 0, 0x83800000, 0x0081),
 new InstInfo(0447, "s_mov_b32", "s4b", "s4b", "none", "none", "none", "none", "none", 2, 2, @"D.u = S0.u.", @"", ISA_Enc.SOP1, 3, 0, 0xBE800300, 0x0001),
@@ -1709,8 +1749,8 @@ new InstInfo(1184, "v_xor_b32_ext", "v4b", "v4b", "v4b", "none", "none", "none",
             this.readsEXEC = (bitSpecs & (1 << 4)) != 0;
             this.setsEXEC = (bitSpecs & (1 << 3)) != 0;
             this.skipsOnEXEC0 = (bitSpecs & (1 << 2)) != 0;
-            this.minSize = ((bitSpecs & (1 << 1)) != 0) ? 8 : 4;
-            this.maxSize = ((bitSpecs & (1 << 0)) != 0) ? 8 : 4;
+            this.minSize = ((bitSpecs & (1 << 1)) != 0) ? 2 : 1;
+            this.maxSize = ((bitSpecs & (1 << 0)) != 0) ? 2 : 1;
         }
     }
 }

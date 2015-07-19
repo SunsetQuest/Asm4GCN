@@ -18,8 +18,8 @@ namespace GcnTools
         /// <summary>Optional 32 bit literal value or extended code value</summary>
         public UInt32? literal;
 
-        /// <summary>Returns 4 for 4 byte instructions or 8 for 8 byte instructions.</summary>
-        public int Size { get { return literal.HasValue ? 8 : 4; } }
+        /// <summary>Returns the size of the instruction in words. (1 = 4 byte or 2 = 8 byte)</summary>
+        public int Size { get { return literal.HasValue ? 2 : 1; } }
     }
 
     internal static class ParseOperand

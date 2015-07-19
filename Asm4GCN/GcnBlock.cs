@@ -101,6 +101,7 @@ namespace GcnTools
             // log.WriteLine("Starting Lines: {0} ms", startedAt.ElapsedMilliseconds);
             bool inCommentMode = false;
             List<GcnStmt> needLabelFilled = new List<GcnStmt>();
+
             for (int line = 1; line < srcLines.Length + 1; line++)  // from lines 1 to Last
                 ProcessLine(srcLines[line - 1], ref inCommentMode, needLabelFilled, line, log);
 
@@ -136,7 +137,7 @@ namespace GcnTools
             /////////// Get bin size ///////////
             binSize = 0;
             foreach (GcnStmt stmt in gcnStmts)
-                binSize += stmt.opSize;
+                binSize += stmt.opSize * 4;
 
             /////////// Create bin ///////////
             // Write bin to output file
@@ -183,8 +184,8 @@ namespace GcnTools
                 {
                     if (gcnStmts[i].opSize == 0)
                     {
-                        minDist += 4;
-                        maxDist += 8;
+                        minDist += 1;
+                        maxDist += 2;
                         toResolove.Add(gcnStmts[i]);
                     }
                     else
@@ -203,7 +204,7 @@ namespace GcnTools
                 foreach (GcnStmt stmt in toResolove)
                 {
                     // Summary: Lets first try and make the instruction as large as possible by using the  
-                    // largest jump length.  If its of size 4 then it always will always be 4.
+                    // largest jump length.  If its of size 1 word then it always will always be 1 word.
 
                     // Log logMax = new Log(stmt.srcLine, true);
                     Log logMax = log; // lets just re-use log in here since we will not using it
@@ -217,8 +218,8 @@ namespace GcnTools
                     {
                         string labelName = m.Value.Remove(0, 1);
                         int label_loc = labels.GetNearestLabel(labelName, stmt.srcLine, log).stmtLoc;
-                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 4;
-                        int max = maxDists[label_loc] - maxDists[stmt.GcnStmtId] - 4;
+                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
+                        int max = maxDists[label_loc] - maxDists[stmt.GcnStmtId] - 1;
                         minDistance += min;
                         maxDistance += max;
                         return max.ToString();
@@ -235,12 +236,12 @@ namespace GcnTools
                         // Console.WriteLine("###Jump on LINE(" + stmt.srcLine + ")  Inst:" + stmt.inst.id + " Options:" + stmt.options);
 
                         // we should update the rest of the minDists[] and maxDists[]  here
-                        if (stmt.opSize == 4)
+                        if (stmt.opSize == 1)
                             for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
-                                maxDists[i + 1] -= 4;
+                                maxDists[i + 1] -= 1;
                         else
                             for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
-                                minDists[i + 1] += 4;
+                                minDists[i + 1] += 1;
 
                         // for (int i = 0; i < gcnStmts.Count; i++)
                         //    Console.WriteLine(minDists[i] + " " + maxDists[i]);
@@ -253,18 +254,18 @@ namespace GcnTools
                     // Console.WriteLine("###Max LINE:" + stmt.srcLine + " Inst:" + stmt.inst.id);
 
 
-                    //// if the largest jump length results in a 4 byte op, use 4 and short circuit to next statement ////
+                    //// if the largest jump length results in a 1 word op, use 1 and short circuit to next statement ////
                     if (!opCodeMax.literal.HasValue && !logMax.hasErrors)
                     {
-                        stmt.opSize = 4;
+                        stmt.opSize = 1; //todo: this line does not make sense with the next statement
 
                         // we should update the rest of the minDists[] and maxDists[]  here
-                        if (stmt.opSize == 4)
+                        if (stmt.opSize == 1)
                             for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
-                                maxDists[i + 1] -= 4;
+                                maxDists[i + 1] -= 1;
                         else
                             for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
-                                minDists[i + 1] += 4;
+                                minDists[i + 1] += 1;
 
                         continue;
                     }
@@ -275,7 +276,7 @@ namespace GcnTools
                     {
                         string labelName = m.Value.Remove(0, 1);
                         int label_loc = labels.GetNearestLabel(labelName, stmt.srcLine, log).stmtLoc;
-                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 4;
+                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
                         return min.ToString();
                     });
 
@@ -292,9 +293,9 @@ namespace GcnTools
                     else if (logMin.hasErrors)
                         stmt.opSize = opCodeMax.Size;
                     else if (opCodeMin.literal.HasValue && opCodeMax.literal.HasValue)
-                        stmt.opSize = 8;
+                        stmt.opSize = 2;
                     else // if both min and max versions are different sizes then it could either. Try again later...
-                        stmt.opSize = 0; //future: maybe just give it 8 and be done with it?
+                        stmt.opSize = 0; //future: maybe just give it 2 and be done with it?
                 }
 
                 // we don't show any errors here, they are shown in doLast
@@ -315,7 +316,7 @@ namespace GcnTools
                 {
                     string labelName = m.Value.Remove(0, 1);
                     int label_loc = labels.GetNearestLabel(labelName, stmt.srcLine, log).stmtLoc;
-                    int distance = minDists[label_loc] - minDists[stmt.GcnStmtId] - 4;
+                    int distance = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
                     return distance.ToString();
                 });
 
@@ -494,8 +495,7 @@ namespace GcnTools
                 string firstWord = commands[0];
                 string options = commands.Count()>1?commands[1].Trim():"";
 
-
-                /////////  Process Register Reservations and Freeing /////////
+                /////////  Process Register Reservations, Renaming and Freeing /////////
                 // New Format: [sv][1248][fiub][#] VarName    Free Format: free VarName
                 // ren cat dog
                 //future wish-list: allow arrays to be created like v4f[4] myFourFloats;
@@ -506,7 +506,7 @@ namespace GcnTools
                         FreeVariable(name, log);
                     continue;
                 }
-
+                
                 if (firstWord == "ren")
                 {
                     string[] matches = options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
@@ -563,10 +563,10 @@ namespace GcnTools
                 }
 
                 ///////// Replace var names with registers making sure to exclude reserved words /////////
-                options = Regex.Replace(options, @"(?<=,|\t|\ |^)(?![vs]\d+)([a-z_][a-z0-9_]*)(?=,|\t|\ |$)", delegate(Match r)
+                options = Regex.Replace(options, @"(?<=,|\t|\ |^)(?![vs]\d+)([a-z_][a-z0-9_]*(\[\d\])?)(?=,|\t|\ |$)", delegate(Match r)
                 {
                     string varName = r.Value;
-
+                 
                     // ignore reserved words
                     if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, varName) >= 0)
                         return varName;
@@ -575,10 +575,24 @@ namespace GcnTools
                     if (ISA_DATA.sRegAliases.ContainsKey(varName))
                         return varName;
 
+                    int len = r.Value.Length;
+                    bool hasIndex = (r.Value[len - 1] == ']');
+                    int index = 0;
+
+                    if (hasIndex)
+                    {
+                        varName = varName.Remove(len - 3);
+                        index = (int)Char.GetNumericValue(r.Value[len - 2]);
+                    }
+
                     // Lets lookup the GcnVar to make sure it exists and also retrieve it.
                     AsmVar nr;
                     if (!vars.TryGetValue(varName, out nr))
                         log.Error("Variable '{0}' is not defined.", varName);
+
+                    // Lets add in the index offset.
+                    if (hasIndex)
+                        nr.regNo += index;
 
                     return nr.RegAsString;
                 });

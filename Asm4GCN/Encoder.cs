@@ -36,7 +36,7 @@ namespace GcnTools
                 case ISA_Enc.MIMG: opcode = encodeMIMG(inst, options, log1); break;
                 case ISA_Enc.MTBUF: opcode = encodeMTBUF(inst, options, log1); break;
                 case ISA_Enc.MUBUF: opcode = encodeMUBUF(inst, options, log1); break;
-                case ISA_Enc.SMRD: opcode = encodeSMRD(inst, options, log1); break;
+                case ISA_Enc.SMEM: opcode = encodeSMRD(inst, options, log1); break;
                 case ISA_Enc.SOP1: opcode = encodeSOP1(inst, options, log1); break;
                 case ISA_Enc.SOP2: opcode = encodeSOP2(inst, options, log1); break;
                 case ISA_Enc.SOPC: opcode = encodeSOPC(inst, options, log1); break;
@@ -97,6 +97,16 @@ namespace GcnTools
         {
 	        string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 	        
+            OpCode op_code = new OpCode{code = instr.opCode};
+
+            if (instr.name == "ds_nop")
+            {
+                if (args.Length > 1 || args[0] != "")
+                    log.Warning("ds_nop does not support any options");
+                op_code.code = instr.opCode;
+                op_code.literal = 0;
+                return op_code;
+            }
             if (args.Length < 4)
                log.Error("number of passed operands is too low");
 
@@ -106,7 +116,6 @@ namespace GcnTools
 	        string data0_str= args[2];
 	        string data1_str= args[3];
 	       
-            OpCode op_code = new OpCode{code = instr.opCode};
 
             uint vdst_val = ParseOperand.parseOnlyVGPR(vdst_str, 1, log);
             uint addr_op = ParseOperand.parseOnlyVGPR(addr_str, 2, log);
@@ -437,9 +446,11 @@ namespace GcnTools
             // SDST	    15	21	enum	7	Destination for instruction.
             // OP	    22	26	enum	5	
             // ENCODING	27	31	enum	5	Must be 1 1 0 0 0.
+
+            OpCode op_code = new OpCode { code = instr.opCode };
             
             if (instr.name == "s_dcache_inv")
-                return (new OpCode { code = instr.opCode});
+                return op_code;
 
             if (instr.name == "s_memtime")
             {
@@ -451,8 +462,6 @@ namespace GcnTools
 
             if ((args.Length < 2) | (args.Length > 4))
                log.Error("S_Load/S_Buffer should contain 2 to 4 arguments.");
-
-            OpCode op_code = new OpCode { code = instr.opCode};
 
             // SDST (argument 0) - Destination for instruction.
             uint sdst_val = ParseOperand.parseOperand(args[0], OpType.SGPR | OpType.VCC | OpType.TRAP | OpType.M0 | OpType.EXEC, 1, log).value;
@@ -502,20 +511,65 @@ namespace GcnTools
             
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
-            if (args.Length != 2)
-                log.Error("SOP1 instructions should have 2 arguments.");
-
             OpCode op_code = new OpCode { code = instr.opCode };
 
+            if (instr.name == "s_setpc_b64")
+            {
+                if (args.Length != 1 || args[0] == "")
+                    log.Error("s_setpc_b64 should have a jump destination only.(S reg or constant");
+
+                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                return new OpCode { code = instr.opCode | ssrc };
+            }
+
+            if (instr.name == "s_getpc_b64")
+            {
+                if (args.Length != 1 || args[0] == "")
+                    log.Error("s_getpc_b64 takes a 64-bit S reg only.");
+
+                uint sdst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
+                return new OpCode { code = instr.opCode | (sdst << 16) };
+            }
+
+            if (instr.name == "s_rfe_b64")
+            {
+                if (args[0] != "")
+                    log.Error("s_rfe_b64 does not take any params.");
+                return op_code;
+            }
+
+            if (instr.name == "s_cbranch_join")
+            {
+                if (args.Length != 1 || args[0] == "")
+                    log.Error("s_cbranch_join only takes one argument.(the saved CSP value)");
+                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                return new OpCode { code = instr.opCode | ssrc };
+            }
+
+            if (instr.name == "s_set_gpr_idx_idx")
+            {
+                if (args.Length != 1 || args[0] == "")
+                    log.Error("s_set_gpr_idx_idx only takes one argument.(M0[7:0] = S0.U[7:0])");
+                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                return new OpCode { code = instr.opCode | ssrc };
+            }
+
+            if (args.Length != 2)
+            {
+                log.Error("SOP1 instructions should have 2 arguments.");
+                return op_code;
+            }
+
+
             // SDST (arg 1) - Destination for instruction.
-            uint sdst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
+            uint sDst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
 
             // SSRC0 (arg 2)
             OpInfo ssrc0 = ParseOperand.parseOperand(args[1], OpType.SCALAR_SRC, 2, log);
             if (ssrc0.flags.HasFlag(OpType.LITERAL))
                 op_code.literal = ssrc0.value;
 
-            op_code.code |= (sdst << 16) | ssrc0.reg;
+            op_code.code |= (sDst << 16) | ssrc0.reg;
 
             return op_code;
         }
@@ -675,12 +729,11 @@ namespace GcnTools
                 return new OpCode { code = instr.opCode | VMCt | (LGKMCt<<8) | (EXPCt<<4) };
             }
 
-            OpInfo immd;
+            uint immd = 0; // can be signed or un-signed
             if (options == "")
             {
                 if (instr.opCtMin > 0)
                     log.Error("{0} expected argument(s).", instr.name);
-                immd = new OpInfo();
             }
             else
             {
@@ -689,16 +742,13 @@ namespace GcnTools
                 if (args.Length != instr.opCtMax)
                     log.Error("{0} should have {1} argument(s).", instr.name, instr.opCtMax, instr.opCtMax);
 
-                immd = ParseOperand.parseOperand(args[0], OpType.CONST, 1, log);
+                immd = ParseOperand.parseSignedNumber(args[0], 16, 1, log);
             }
 
-            // Lets make sure the immediate is in range
-            if (immd.dataDisc.HasFlag(DataDesc.FLOAT))
-               log.Error("Float16 not supported here yet - use hex value instead");
-            else if ((((immd.value & 0xffff8000) + 0x8000) & 0xffff7fff) != 0)
+            if ((immd & 0xffff0000) != 0)
                log.Error("The immediate value seems to use more then 16 bits.");
 
-            return new OpCode { code = instr.opCode | immd.value };
+            return new OpCode { code = instr.opCode | immd };
         }
 
         /// <summary>

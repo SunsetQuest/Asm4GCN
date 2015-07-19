@@ -25,8 +25,8 @@ namespace GcnTools
         public InstInfo inst;
         /// <summary>This is all the text after the instruction itself.</summary>
         public string options;
-        /// <summary>The size of the OpCode. It can be 4, 8, or 0 for unknown. Sometimes opSize is known before the opCode.</summary>
-        public int opSize; // 0 = unknown
+        /// <summary>The word size of the OpCode. It can be 1, 2, or 0 for unknown.</summary>
+        public int opSize; 
         /// <summary>The line number of the source file it was found it.</summary>
         public int srcLine;
         /// <summary>Holds the 4 or 8 bytes of the OP binary microcode.</summary>
