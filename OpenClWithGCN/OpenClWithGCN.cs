@@ -68,7 +68,7 @@ namespace OpenClWithGcnNS
 
             /////////// Step: compile the pulled Asm4GCN blocks to binary and note the byteSize, 
             ///////////        sReg and vReg counts. Blocks are compiled with temporary registers.
-            // future step here for inline
+            //future: step here for inline
 
             /////////// Step: compile Asm4GCN Blocks into binary ///////////
             CompileGcnBlocks(log, env.asmBlocks, out success);
@@ -125,11 +125,7 @@ namespace OpenClWithGcnNS
 		        // older 13.251.9001.0 (4 /23/2014): 02FF789AC0007E1202FF (02 FF 78 9A C0 00 7E 12 02 ff)
 
                 if (start > 0)
-                {
-                    byte[] bin = asmBlock.bin;
-                    for (int i = 0; i < bin.Length; i++)
-                        dummyBinary[start + i] = bin[i]; //todo: bytecopy instead?
-                }
+                    Buffer.BlockCopy(asmBlock.bin, 0, dummyBinary, start, asmBlock.bin.Length);
                 else
                     Console.WriteLine("Unable to find Asm4GCN block {0} - this could be cause by unsupported driver version", asmBlock.funcName);
             }

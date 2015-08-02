@@ -273,7 +273,7 @@
         AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
         LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
         ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAAAe
-        CwAAAk1TRnQBSQFMAgEBBQEAAdABAQHQAQEBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
+        CwAAAk1TRnQBSQFMAgEBBQEAAdgBAQHYAQEBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
         AwABIAMAAQEBAAEYBgABGBIAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/
         kAAw/5AAMP+QADD/kAAw/5AAMP+QAA//AUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEi
         cv8BkAHbAf8CAAE6EgABOgIAAf8B2wGQGP8BTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGx
@@ -464,19 +464,19 @@ static class Example1 // This examples doubles one array into another.
     v_add_i32     laneId, vcc, laneId, vec1             // 20|4A000300|
     v_add_i32     laneId, vcc, myAddress2, laneId       // 24|4A000001|
     v_lshlrev_b32 laneId, 2, laneId                     // 28|34000082|
-    ren laneId vec2
+    //ren laneId vec2
     s_load_dwordx4 addr3, addr0, 0x60                   // 2C|C0860360|
     s_waitcnt     lgkmcnt(0)                            // 30|BF8C007F|
-    v_add_i32     vec1, vcc, s4, vec2                   // 34|4A020004|
+    v_add_i32     vec1, vcc, s4, laneId                   // 34|4A020004|
     tbuffer_load_format_x  vec1, vec1, addr3, _F32_     // 38|EBA01000|80030101
     s_buffer_load_dword  myAddress1, addr2, 0x04        // 40|C2000904|
     s_load_dwordx4 addr1, addr0, 0x68                   // 44|C0820368|
     s_waitcnt     lgkmcnt(0)                            // 48|BF8C007F|
-    v_add_i32     vec2, vcc, myAddress1, vec2           // 4C|4A000000|
+    v_add_i32     laneId, vcc, myAddress1, laneId           // 4C|4A000000|
     free myAddress1, myAddress2  // var is freed and register returned to pool.
     s_waitcnt     vmcnt(0)                              // 50|BF8C0F70|
     v_add_f32     vec1, vec1, vec1                      // 54|10020301|
-    tbuffer_store_format_x vec1, vec2, addr1, _F32_     // 58|EBA41000|80010100
+    tbuffer_store_format_x vec1, laneId, addr1, _F32_     // 58|EBA41000|80010100
     s_endpgm                                            // 60|BF810000|
   };
   

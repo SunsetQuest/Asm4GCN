@@ -309,7 +309,7 @@ namespace GcnTools
 
             if (index < 0)
             {
-                log.Error("FreeReg is unable to locate register " + regId + " in the allowed register pool.");
+                log.Error("'Free' is unable to locate register " + regId + " in the allowed register pool.");
                 return;
             }
 

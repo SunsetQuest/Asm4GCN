@@ -89,7 +89,7 @@ namespace OpenClWithGcnNS
         public int binSize;
 
         /// <summary>This is the deciphered asm statement.</summary>
-        public List<GcnStmt> stms;
+        public List<Stmt> stms;
 
         /// <summary>This is a list of registers used in the program.</summary>
         public List<RegUsage> sRegUsage, vRegUsage;

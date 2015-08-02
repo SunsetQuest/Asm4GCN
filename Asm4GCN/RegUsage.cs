@@ -13,15 +13,15 @@ namespace GcnTools
          public int timesUsed;
      }
     
-    /// <summary>Keeps a usage count of each register size. It also remembers the maximums and on what line they are on.</summary>
+    /// <summary>Keeps a usage count of each register size. It also remembers the maximums and on what line it was on.</summary>
     public class RegUsageCalc : IFormattable
     {
         /// <summary>contains the max register usage</summary>
         public int[] curSizeCts = new int[64];
         /// <summary>This is the max utilization for each particular size</summary>
         public int[] maxSizeCts = new int[64];
-        /// <summary>This is the line number of the last register pool size increase. This is a good place to try and lower register usage.</summary>
-        public int lineOnLastPoolIncrease;
+        /// <summary>This is first statement where register pressure is highest. This is a good place to try and lower register usage.</summary>
+        public Stmt firstStmtWithMostRegs;
         /// <summary>This is the end of the list for maxCurSz.  It is also the largest register used.</summary>
         public int largestSz = 0;
         /// <summary>Should RegUsageCalc calculate worst case mode or very good case mode.  A good case(false) calculation returns a lower bound of registers that are needed. While a worst case(true) would return the worst case.  There are two variables that determin how well we can pack registers.  The first is how many breaks there are in a register space.  In the best case there would be one contigous region of registers.  In this situation we need less registers.  The other end of the spectrum is the bare minum number of registers that are need all broken up. (2 Int32, 3 Doubles would be broken up into 5 different spaces).  When this is the case registers cannot be compacted as well. 
@@ -33,10 +33,10 @@ namespace GcnTools
             this.worstCaseMode = worstCaseMode;
         }
 
-        /// <summary>Adds 1 to the usage count for the needed register space size.</summary>
+        /// <summary>Adds 1 to the usage count for the needed register size.</summary>
         /// <param name="size">Size of reg in bytes.</param>
-        /// <param name="srcLine">The line number in the source file.</param>
-        public void AddToCalc(int size, int srcLine = 0)
+        /// <param name="stmt">The statement where a new register is being requested.</param>
+        public void AddToCalc(int size, Stmt stmt)
         {
             // grow maxCurSz if needed
             largestSz = Math.Max(size, largestSz);
@@ -49,7 +49,7 @@ namespace GcnTools
                 if (maxSizeCts[size] < curSizeCts[size])
                 {
                     maxSizeCts[size] = curSizeCts[size];
-                    lineOnLastPoolIncrease = srcLine;
+                    firstStmtWithMostRegs = stmt;
                 }
             }
             // does curSizeCt fit in current maxSizeCts? if not then grow it
@@ -73,7 +73,7 @@ namespace GcnTools
                     if (doesNotFit)
                     {
                         maxSizeCts[size]++;
-                        lineOnLastPoolIncrease = srcLine;
+                        firstStmtWithMostRegs = stmt;
                         break;
                     }
                 }

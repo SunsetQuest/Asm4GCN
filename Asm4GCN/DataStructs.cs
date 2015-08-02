@@ -2,6 +2,8 @@
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without warranty.
 
+using System;
+using System.Collections.Generic;
 namespace GcnTools
 {
     /// <summary>This is similar to a c/c++ #define.  The Assembler will first replace any #define names with their values.</summary>
@@ -17,41 +19,34 @@ namespace GcnTools
     }
 
     /// <summary>GcnStmt represents a single asm instruction statement.</summary>
-    public class GcnStmt
+    public class Stmt
     {
+        /// <summary>The statement text after removing comments and processing #defines.</summary>
+        public string fullStmt;
         /// <summary>This is the index of the statement. </summary>
         public int GcnStmtId;
         /// <summary>The GCN ISA instruction/Operation for this operation.</summary>
         public InstInfo inst;
         /// <summary>This is all the text after the instruction itself.</summary>
         public string options;
+        ///// <summary>Vars</summary>
+        //public d variables;
         /// <summary>The word size of the OpCode. It can be 1, 2, or 0 for unknown.</summary>
         public int opSize; 
         /// <summary>The line number of the source file it was found it.</summary>
-        public int srcLine;
+        public int lineNum;
+        /// <summary>The number of statements before this one on the same line.</summary>
+        public int lineDepth;
         /// <summary>Holds the 4 or 8 bytes of the OP binary microcode.</summary>
         public OpCode opCode;
         /// <summary>This is the location (in words) of where this statement is in the bin output.</summary>
         public int locInBin;
+        /// <summary>Contains a list of vars with their located.</summary>
+        public List<VariableUsageLoc> vars = new List<VariableUsageLoc>();
+        /// <summary>A list of variables that are declared prior to this statement.</summary>
+        public List<Variable> newVars = new List<Variable>();
+        /// <summary>A list of variables that are freed after to this statement.</summary>
+        public List<Variable> freeVars = new List<Variable>();
     }
-
-    /// <summary>AsmVar is a variable that is automatically assigned to a register. An asmVar must be declared and freed.</summary>
-    public struct AsmVar
-    {
-        /// <summary>The friendly variable name for 1 or more registers.</summary>
-        public string name;
-        /// <summary>The beginning actual register number where this variable is assigned.</summary>
-        public int regNo;
-        /// <summary>True if a Scaler register, False if Vector Register.</summary>
-        public bool isScaler;
-        /// <summary>The actual size of the register in bytes. Usually either 1, 2, 4, or 8.</summary>
-        public int size;
-        /// <summary>They data dataType for the register/variable. Usually either f=float, i=int, u=unsigned, or b=bool.</summary>
-        public char type; // f, i, u, b
-        /// <summary>Returns the register as a string such as 's17' or 'v9'</summary>
-        public string RegAsString
-        {
-            get { return (isScaler ? "s" : "v") + regNo; }
-        }
-    }
+    
 }

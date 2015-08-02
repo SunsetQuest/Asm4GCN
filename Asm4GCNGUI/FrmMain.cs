@@ -569,15 +569,18 @@ namespace Asm4GcnGUI
         /// </summary>
         public static class NotepadHelper
         {
-            [DllImport("user32.dll", EntryPoint = "SetWindowText", CharSet = CharSet.Unicode)]
-            private static extern int SetWindowText(IntPtr hWnd, string text);
+            static class NativeMethods
+            {
+                [DllImport("user32.dll", EntryPoint = "SetWindowText", CharSet = CharSet.Unicode)]
+                internal static extern int SetWindowText(IntPtr hWnd, string text);
 
-            [DllImport("user32.dll", EntryPoint = "FindWindowEx", CharSet = CharSet.Unicode)]
-            private static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter, 
-                string lpszClass, string lpszWindow);
+                [DllImport("user32.dll", EntryPoint = "FindWindowEx", CharSet = CharSet.Unicode)]
+                internal static extern IntPtr FindWindowEx(IntPtr hwndParent, IntPtr hwndChildAfter,
+                    string lpszClass, string lpszWindow);
 
-            [DllImport("User32.dll", EntryPoint = "SendMessage", CharSet = CharSet.Unicode)]
-            private static extern int SendMessage(IntPtr hWnd, int uMsg, int wParam, string lParam);
+                [DllImport("User32.dll", EntryPoint = "SendMessage", CharSet = CharSet.Unicode)]
+                internal static extern int SendMessage(IntPtr hWnd, int uMsg, int wParam, string lParam);
+            }
 
             /// <summary>
             /// Opens a notepad and places a string in the body and also gives it an optional title.
@@ -590,12 +593,12 @@ namespace Asm4GcnGUI
                     notepad.WaitForInputIdle();
 
                     if (!string.IsNullOrEmpty(title))
-                        SetWindowText(notepad.MainWindowHandle, title);
+                        NativeMethods.SetWindowText(notepad.MainWindowHandle, title);
 
                     if (!string.IsNullOrEmpty(message))
                     {
-                        IntPtr child = FindWindowEx(notepad.MainWindowHandle, new IntPtr(0), "Edit", null);
-                        SendMessage(child, 0x000C, 0, message);
+                        IntPtr child = NativeMethods.FindWindowEx(notepad.MainWindowHandle, new IntPtr(0), "Edit", null);
+                        NativeMethods.SendMessage(child, 0x000C, 0, message);
                     }
                 }
             }

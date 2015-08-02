@@ -656,7 +656,6 @@
             this.txtOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this.txtOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtOutput.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.txtOutput.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtOutput.IsReplaceMode = false;
             this.txtOutput.Location = new System.Drawing.Point(0, 830);
             this.txtOutput.Name = "txtOutput";
@@ -735,6 +734,7 @@
             this.txtHost.DelayedTextChangedInterval = 1000;
             this.txtHost.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtHost.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtHost.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtHost.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
             this.txtHost.IsReplaceMode = false;
             this.txtHost.Language = FastColoredTextBoxNS.Language.CSharp;
@@ -792,6 +792,7 @@
             this.txtAsm.DelayedTextChangedInterval = 1000;
             this.txtAsm.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtAsm.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.txtAsm.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtAsm.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
             this.txtAsm.IsReplaceMode = false;
             this.txtAsm.LeftBracket = '{';

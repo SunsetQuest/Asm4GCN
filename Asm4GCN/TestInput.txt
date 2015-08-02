@@ -8,13 +8,6 @@
 #S_POOL s22,s23,s24,s27,s29,s30,s31,s33,s34,s35,s36,s37
 #V_POOL v11,v12,v13,v14,v15,v17,v19,v20,v21,v23,v24,v25
 
-// Examples of inputs
-#REF v8u Input1ArrayAddress v12
-#REF v8u Input2ArrayAddress v14
-#REF v8u Input0ArrayAddress v20
-#REF v4u Input9ArrayAddress v23
-#REF s8u Output2ArrayAddress s30
-#REF v4u Count v11
 
 // Examples of variables
 // register types are 3 digits
@@ -27,18 +20,26 @@
 //     u - unsigned int 
 //     b - bits(or unspecified)
 
+// Examples of hard coded vars
+v8u Input1ArrayAddress v12
+v8u Input2ArrayAddress v14
+v8u Input0ArrayAddress v20
+v4u Input9ArrayAddress v23
+s8u Output2ArrayAddress s30
+v4u Count v11
+
 s8i z			// scalar signed long long 
 s4u y			// scalar unsigned int
 v4f va, vb, vc	// vector float
 s4i c,d   e		// Can use tab or comma
 s4i a, b,		// comma at end is okay
-s_mov_b32 a,  3
+s_mov_b32 a, z[2] // variable indexing
 S_ADD_I32 a, a  ,  2 
 free a b;		// free up some of the vars
 s4u a b;		// test reuse
 
 
-// possible future friendly commands
+// possible  friendly commands
 // v8u[2] aa
 // v8u bb = 5	// initialize value
 // add b, m, n	// auto detect add type

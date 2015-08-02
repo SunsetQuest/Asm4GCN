@@ -85,7 +85,7 @@ namespace GcnTools
 
             GcnBlock Asm4GCN = new GcnBlock();
             
-            List<GcnStmt> gcnStmts;
+            List<Stmt> gcnStmts;
             int binSize = 0;
 
             if (inUsageMode)
@@ -98,7 +98,7 @@ namespace GcnTools
                 // Write bin or halfway point to output file
                 int stats_4ByteInstCt = 0;
                 int stats_8ByteInstCt = 0;
-                foreach (GcnStmt op in gcnStmts)
+                foreach (Stmt op in gcnStmts)
                     if (op.opCode.literal.HasValue) stats_8ByteInstCt++; else stats_4ByteInstCt++;
 
                 if (true) // lets just always show this for now
@@ -189,13 +189,13 @@ namespace GcnTools
                 log.WriteLine("ID |Line|Sz|Loc| OpCode |Params post Processing|       Source Line");
                 for (int i = 0; i < gcnStmts.Count; i++)
                 {
-                    GcnStmt stmt = gcnStmts[i];
-                    string sBefore = lines[stmt.srcLine - 1];
+                    Stmt stmt = gcnStmts[i];
+                    string sBefore = lines[stmt.lineNum - 1];
                     string sAfter = stmt.options;
                     sBefore = sBefore.Substring(0, Math.Min(30, sBefore.Length));
                     sAfter = sAfter.Substring(0, Math.Min(21, sAfter.Length));
                     sBefore = Regex.Replace(sBefore, @"\t|\n|\r", " ");
-                    log.WriteLine("{0,3}|{1,4}|{2,2}|{3,3}|{4:X}| {5,-21}| {6,-30}", stmt.GcnStmtId, stmt.srcLine, stmt.opSize, stmt.locInBin, stmt.opCode.code, sAfter, sBefore);//  stmt.inst.id + " Options:" + stmt.options);
+                    log.WriteLine("{0,3}|{1,4}|{2,2}|{3,3}|{4:X}| {5,-21}| {6,-30}", stmt.GcnStmtId, stmt.lineNum, stmt.opSize, stmt.locInBin, stmt.opCode.code, sAfter, sBefore);//  stmt.inst.id + " Options:" + stmt.options);
                 }
             }
 
