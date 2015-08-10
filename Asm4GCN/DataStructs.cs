@@ -2,7 +2,6 @@
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without warranty.
 
-using System;
 using System.Collections.Generic;
 namespace GcnTools
 {
@@ -41,7 +40,7 @@ namespace GcnTools
         public OpCode opCode;
         /// <summary>This is the location (in words) of where this statement is in the bin output.</summary>
         public int locInBin;
-        /// <summary>Contains a list of vars with their located.</summary>
+        /// <summary>Contains a list of vars used in this statement with their located.</summary>
         public List<VariableUsageLoc> vars = new List<VariableUsageLoc>();
         /// <summary>A list of variables that are declared prior to this statement.</summary>
         public List<Variable> newVars = new List<Variable>();

@@ -273,7 +273,7 @@
         AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
         LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
         ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAAAe
-        CwAAAk1TRnQBSQFMAgEBBQEAAdgBAQHYAQEBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
+        CwAAAk1TRnQBSQFMAgEBBQEAASABAgEgAQIBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
         AwABIAMAAQEBAAEYBgABGBIAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/
         kAAw/5AAMP+QADD/kAAw/5AAMP+QAA//AUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEi
         cv8BkAHbAf8CAAE6EgABOgIAAf8B2wGQGP8BTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGx
@@ -341,6 +341,111 @@
         AAAAAAAAAACNAAEAAfj////8////CgAAAAAAAAAApAABAAH3/////P///woAAAAAAAAAAJYAAQAL
 </value>
   </data>
+  <data name="txtAsm.Hotkeys" xml:space="preserve">
+    <value>Tab=IndentIncrease, Escape=ClearHints, PgUp=GoPageUp, PgDn=GoPageDown, End=GoEnd, Home=GoHome, Left=GoLeft, Up=GoUp, Right=GoRight, Down=GoDown, Ins=ReplaceMode, Del=DeleteCharRight, F3=FindNext, Shift+Tab=IndentDecrease, Shift+PgUp=GoPageUpWithSelection, Shift+PgDn=GoPageDownWithSelection, Shift+End=GoEndWithSelection, Shift+Home=GoHomeWithSelection, Shift+Left=GoLeftWithSelection, Shift+Up=GoUpWithSelection, Shift+Right=GoRightWithSelection, Shift+Down=GoDownWithSelection, Shift+Ins=Paste, Shift+Del=Cut, Ctrl+Back=ClearWordLeft, Ctrl+Space=AutocompleteMenu, Ctrl+End=GoLastLine, Ctrl+Home=GoFirstLine, Ctrl+Left=GoWordLeft, Ctrl+Up=ScrollUp, Ctrl+Right=GoWordRight, Ctrl+Down=ScrollDown, Ctrl+Ins=Copy, Ctrl+Del=ClearWordRight, Ctrl+0=ZoomNormal, Ctrl+A=SelectAll, Ctrl+B=BookmarkLine, Ctrl+C=Copy, Ctrl+E=MacroExecute, Ctrl+F=FindDialog, Ctrl+G=GoToDialog, Ctrl+H=ReplaceDialog, Ctrl+I=AutoIndentChars, Ctrl+M=MacroRecord, Ctrl+N=GoNextBookmark, Ctrl+R=Redo, Ctrl+U=UpperCase, Ctrl+V=Paste, Ctrl+X=Cut, Ctrl+Y=Redo, Ctrl+Z=Undo, Ctrl+Add=ZoomIn, Ctrl+Subtract=ZoomOut, Ctrl+OemMinus=NavigateBackward, Ctrl+Shift+End=GoLastLineWithSelection, Ctrl+Shift+Home=GoFirstLineWithSelection, Ctrl+Shift+Left=GoWordLeftWithSelection, Ctrl+Shift+Right=GoWordRightWithSelection, Ctrl+Shift+B=UnbookmarkLine, Ctrl+Shift+C=CommentSelected, Ctrl+Shift+N=GoPrevBookmark, Ctrl+Shift+U=LowerCase, Ctrl+Shift+OemMinus=NavigateForward, Alt+Back=Undo, Alt+Up=MoveSelectedLinesUp, Alt+Down=MoveSelectedLinesDown, Alt+F=FindChar, Alt+Shift+Left=GoLeft_ColumnSelectionMode, Alt+Shift+Up=GoUp_ColumnSelectionMode, Alt+Shift+Right=GoRight_ColumnSelectionMode, Alt+Shift+Down=GoDown_ColumnSelectionMode</value>
+  </data>
+  <data name="txtAsm.ServiceColors" mimetype="application/x-microsoft.net.object.binary.base64">
+    <value>
+        AAEAAAD/////AQAAAAAAAAAMAgAAAFZGYXN0Q29sb3JlZFRleHRCb3gsIFZlcnNpb249Mi4xNi4yLjAs
+        IEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49ZmI4YWExMmI5OTRlZjYxYgwDAAAAUVN5c3Rl
+        bS5EcmF3aW5nLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49
+        YjAzZjVmN2YxMWQ1MGEzYQUBAAAAIkZhc3RDb2xvcmVkVGV4dEJveE5TLlNlcnZpY2VDb2xvcnMGAAAA
+        KDxDb2xsYXBzZU1hcmtlckZvcmVDb2xvcj5rX19CYWNraW5nRmllbGQoPENvbGxhcHNlTWFya2VyQmFj
+        a0NvbG9yPmtfX0JhY2tpbmdGaWVsZCo8Q29sbGFwc2VNYXJrZXJCb3JkZXJDb2xvcj5rX19CYWNraW5n
+        RmllbGQmPEV4cGFuZE1hcmtlckZvcmVDb2xvcj5rX19CYWNraW5nRmllbGQmPEV4cGFuZE1hcmtlckJh
+        Y2tDb2xvcj5rX19CYWNraW5nRmllbGQoPEV4cGFuZE1hcmtlckJvcmRlckNvbG9yPmtfX0JhY2tpbmdG
+        aWVsZAQEBAQEBBRTeXN0ZW0uRHJhd2luZy5Db2xvcgMAAAAUU3lzdGVtLkRyYXdpbmcuQ29sb3IDAAAA
+        FFN5c3RlbS5EcmF3aW5nLkNvbG9yAwAAABRTeXN0ZW0uRHJhd2luZy5Db2xvcgMAAAAUU3lzdGVtLkRy
+        YXdpbmcuQ29sb3IDAAAAFFN5c3RlbS5EcmF3aW5nLkNvbG9yAwAAAAIAAAAF/P///xRTeXN0ZW0uRHJh
+        d2luZy5Db2xvcgQAAAAEbmFtZQV2YWx1ZQprbm93bkNvbG9yBXN0YXRlAQAAAAkHBwMAAAAKAAAAAAAA
+        AACWAAEAAfv////8////CgAAAAAAAAAApAABAAH6/////P///woAAAAAAAAAAJYAAQAB+f////z///8K
+        AAAAAAAAAACNAAEAAfj////8////CgAAAAAAAAAApAABAAH3/////P///woAAAAAAAAAAJYAAQAL
+</value>
+  </data>
+  <data name="txtAsm.Text" xml:space="preserve">
+    <value>__asm4GCN myAsmFunc (float*,float*,float*)
+{
+  // ======== Pre-Loaded Registers =========
+  // s[2:3] - PTR_UAV_TABLE
+  // s[2:3] +0x60 - base_resource_const1(#T)
+  // s[2:3] +0x68 - base_resource_const2(#T)
+  // s[4:7] - IMM_CONST_BUFFER0
+  // s[4:7] +0x00 - Grid Size
+  // s[4:7] +0x04 - Local Size
+  // s[4:7] +0x18 - baseGlobalId
+  // s[8:11] -IMM_CONST_BUFFER1
+  // s[8:11]+0x00 - param1 offset
+  // s[8:11]+0x04 - param2 offset 
+  // s[8:11]+0x08 - param3 offset
+  // s1     - threadgroupId
+  // s12    - groupId
+  // v0     - laneId
+  
+  // Use a #define to shorten tbuffer_load instruction
+  #define _F32_ 0 offen format:[BUF_DATA_FORMAT_32,BUF_NUM_FORMAT_FLOAT]
+  
+  // Variable decelerations with specific registers (pre-loaded regs)
+  s8u  resConsts s[2:3]   // base resource constants
+  s16u uavBuff   s[4:7], paramsOffset s[8:11], groupId s12
+  v4b  laneId    v0       // v0 is pre-loaded with lane id
+  
+  // Setup Resource Constant
+  s_load_dwordx4 s16u resConst1, resConsts, 0x68             
+  
+  // establish GlobalID
+  s_buffer_load_dword s4u baseGlobalId,uavBuff, 0x18 
+  s_buffer_load_dword s4u localSize, uavBuff, 0x04  
+  s_waitcnt     lgkmcnt(0)                      
+  v_mov_b32     v4u vLocalSize, localSize                  
+  v_mul_i32_i24     vLocalSize, groupId, vLocalSize           
+  v_add_i32     v4u localSizeIdx, vcc, laneId, vLocalSize 
+  v_add_i32     v4u vGlobalID, vcc, baseGlobalId, localSizeIdx
+  v_lshlrev_b32 v4u vGlobalOffset, 2, vGlobalID
+
+  // create a tool called 'ShowVar' to easily output a variable
+  #define _ShowVar_(VarToPrint) \
+    v_mov_b32 v4u debugToPrint, VarToPrint;\
+    tbuffer_store_format_x debugToPrint, debugOffset,resConst1,_F32_ 
+  s_buffer_load_dword s4u param3Offset, paramsOffset, 0x08
+  s_waitcnt     lgkmcnt(0)                      
+  v_add_i32 v4u debugOffset, vcc, param3Offset, vGlobalOffset
+  
+  // Fetch the value that we want to multiply by 2.
+  s_buffer_load_dword s4u sPara1Ptr, paramsOffset, 0x00         
+  s_load_dwordx4 s16u resConst0, resConsts, 0x60
+  s_waitcnt     lgkmcnt(0)
+  v_add_i32     v4b baseOffset, vcc, sPara1Ptr, vGlobalOffset
+  tbuffer_load_format_x v4b val, baseOffset, resConst0, _F32_
+  s_waitcnt     vmcnt(0)                              
+
+  // Perform the "sum = val * 2"
+  v_mul_f32     v4f sum, 2.0, val
+  
+  // Write the results back to memory.
+  s_buffer_load_dword s4u param2Offset, paramsOffset, 0x04
+  s_waitcnt     lgkmcnt(0)                            
+  s_waitcnt     vmcnt(0)                              
+  v_add_i32     v4u dstOffset, vcc, param2Offset,vGlobalOffset
+  free param2Offset  // var is freed and register returned to pool.
+  tbuffer_store_format_x sum, dstOffset,resConst1,_F32_ 
+  
+  _ShowVar_(vGlobalOffset)
+  
+  // Exit the kernel
+  s_endpgm                                            
+};
+  
+  // This is not used here but is what generates the above assembly.
+  // __kernel and __asm4GCN blocks can be used in the same clProgram
+__kernel void myOpenClFunc(__global float* input, __global float* output) 
+{ 
+      size_t i = get_global_id(0);
+      output[i] = input[i] + input[i];
+};</value>
+  </data>
+  <data name="txtHost.Hotkeys" xml:space="preserve">
+    <value>Tab=IndentIncrease, Escape=ClearHints, PgUp=GoPageUp, PgDn=GoPageDown, End=GoEnd, Home=GoHome, Left=GoLeft, Up=GoUp, Right=GoRight, Down=GoDown, Ins=ReplaceMode, Del=DeleteCharRight, F3=FindNext, Shift+Tab=IndentDecrease, Shift+PgUp=GoPageUpWithSelection, Shift+PgDn=GoPageDownWithSelection, Shift+End=GoEndWithSelection, Shift+Home=GoHomeWithSelection, Shift+Left=GoLeftWithSelection, Shift+Up=GoUpWithSelection, Shift+Right=GoRightWithSelection, Shift+Down=GoDownWithSelection, Shift+Ins=Paste, Shift+Del=Cut, Ctrl+Back=ClearWordLeft, Ctrl+Space=AutocompleteMenu, Ctrl+End=GoLastLine, Ctrl+Home=GoFirstLine, Ctrl+Left=GoWordLeft, Ctrl+Up=ScrollUp, Ctrl+Right=GoWordRight, Ctrl+Down=ScrollDown, Ctrl+Ins=Copy, Ctrl+Del=ClearWordRight, Ctrl+0=ZoomNormal, Ctrl+A=SelectAll, Ctrl+B=BookmarkLine, Ctrl+C=Copy, Ctrl+E=MacroExecute, Ctrl+F=FindDialog, Ctrl+G=GoToDialog, Ctrl+H=ReplaceDialog, Ctrl+I=AutoIndentChars, Ctrl+M=MacroRecord, Ctrl+N=GoNextBookmark, Ctrl+R=Redo, Ctrl+U=UpperCase, Ctrl+V=Paste, Ctrl+X=Cut, Ctrl+Y=Redo, Ctrl+Z=Undo, Ctrl+Add=ZoomIn, Ctrl+Subtract=ZoomOut, Ctrl+OemMinus=NavigateBackward, Ctrl+Shift+End=GoLastLineWithSelection, Ctrl+Shift+Home=GoFirstLineWithSelection, Ctrl+Shift+Left=GoWordLeftWithSelection, Ctrl+Shift+Right=GoWordRightWithSelection, Ctrl+Shift+B=UnbookmarkLine, Ctrl+Shift+C=CommentSelected, Ctrl+Shift+N=GoPrevBookmark, Ctrl+Shift+U=LowerCase, Ctrl+Shift+OemMinus=NavigateForward, Alt+Back=Undo, Alt+Up=MoveSelectedLinesUp, Alt+Down=MoveSelectedLinesDown, Alt+F=FindChar, Alt+Shift+Left=GoLeft_ColumnSelectionMode, Alt+Shift+Up=GoUp_ColumnSelectionMode, Alt+Shift+Right=GoRight_ColumnSelectionMode, Alt+Shift+Down=GoDown_ColumnSelectionMode</value>
+  </data>
   <data name="txtHost.ServiceColors" mimetype="application/x-microsoft.net.object.binary.base64">
     <value>
         AAEAAAD/////AQAAAAAAAAAMAgAAAFZGYXN0Q29sb3JlZFRleHRCb3gsIFZlcnNpb249Mi4xNi4yLjAs
@@ -392,6 +497,7 @@ static class Example1 // This examples doubles one array into another.
     // Allocate an input and output memory buffers
     Mem input  = env.context.CreateBuffer(MemoryFlags.ReadOnly, dataSz);
     Mem output = env.context.CreateBuffer(MemoryFlags.WriteOnly,dataSz);
+    Mem debug  = env.context.CreateBuffer(MemoryFlags.WriteOnly, dataSz);
 
     // Copy our host buffer of random values to input device buffer 
     env.cmdQueue.EnqueueWriteBuffer(input, true, 0, dataSz, data);
@@ -399,94 +505,33 @@ static class Example1 // This examples doubles one array into another.
     // Set the arguments to our kernel, and enqueue it for execution 
     kernel.Arguments[0].SetValue(input);
     kernel.Arguments[1].SetValue(output);
+    kernel.Arguments[2].SetValue(debug);
 
-    // Enqueue and run the kernel 
+    // Enqueue and run the kernel.
     env.cmdQueue.EnqueueNDRangeKernel(kernel, count, 256);
 
-    // Force command queue to be processed, wait until all commands finish
+    // Wait until all commands finish.
     env.cmdQueue.Finish();
 
-    // Read back the results
+    // Read back the results.
     float[] results = new float[count];
     env.cmdQueue.EnqueueReadBufferAndWait(output, results);
+    int[] debugOutput = new int[count];
+    env.cmdQueue.EnqueueReadBufferAndWait(debug, debugOutput);
 
-    // Validate our results 
+    // Validate and print a brief summary detailing the results
     int correct = 0;
     for (int i = 0; i &lt; count; i++)
       correct += (results[i] == data[i] + data[i]) ? 1 : 0;
-
-    // Print a brief summary detailing the results 
     Console.WriteLine("Computed {0}/{1} correct values!", correct, count);
+    
+    // Print Debug information
+    for (int i = 0; i &lt; 3000; i++)
+        Console.WriteLine("Debug: {0}: {1}", i, debugOutput[i]);
+
     Console.ReadKey();
   }
 }</value>
-  </data>
-  <data name="txtAsm.ServiceColors" mimetype="application/x-microsoft.net.object.binary.base64">
-    <value>
-        AAEAAAD/////AQAAAAAAAAAMAgAAAFZGYXN0Q29sb3JlZFRleHRCb3gsIFZlcnNpb249Mi4xNi4yLjAs
-        IEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49ZmI4YWExMmI5OTRlZjYxYgwDAAAAUVN5c3Rl
-        bS5EcmF3aW5nLCBWZXJzaW9uPTQuMC4wLjAsIEN1bHR1cmU9bmV1dHJhbCwgUHVibGljS2V5VG9rZW49
-        YjAzZjVmN2YxMWQ1MGEzYQUBAAAAIkZhc3RDb2xvcmVkVGV4dEJveE5TLlNlcnZpY2VDb2xvcnMGAAAA
-        KDxDb2xsYXBzZU1hcmtlckZvcmVDb2xvcj5rX19CYWNraW5nRmllbGQoPENvbGxhcHNlTWFya2VyQmFj
-        a0NvbG9yPmtfX0JhY2tpbmdGaWVsZCo8Q29sbGFwc2VNYXJrZXJCb3JkZXJDb2xvcj5rX19CYWNraW5n
-        RmllbGQmPEV4cGFuZE1hcmtlckZvcmVDb2xvcj5rX19CYWNraW5nRmllbGQmPEV4cGFuZE1hcmtlckJh
-        Y2tDb2xvcj5rX19CYWNraW5nRmllbGQoPEV4cGFuZE1hcmtlckJvcmRlckNvbG9yPmtfX0JhY2tpbmdG
-        aWVsZAQEBAQEBBRTeXN0ZW0uRHJhd2luZy5Db2xvcgMAAAAUU3lzdGVtLkRyYXdpbmcuQ29sb3IDAAAA
-        FFN5c3RlbS5EcmF3aW5nLkNvbG9yAwAAABRTeXN0ZW0uRHJhd2luZy5Db2xvcgMAAAAUU3lzdGVtLkRy
-        YXdpbmcuQ29sb3IDAAAAFFN5c3RlbS5EcmF3aW5nLkNvbG9yAwAAAAIAAAAF/P///xRTeXN0ZW0uRHJh
-        d2luZy5Db2xvcgQAAAAEbmFtZQV2YWx1ZQprbm93bkNvbG9yBXN0YXRlAQAAAAkHBwMAAAAKAAAAAAAA
-        AACWAAEAAfv////8////CgAAAAAAAAAApAABAAH6/////P///woAAAAAAAAAAJYAAQAB+f////z///8K
-        AAAAAAAAAACNAAEAAfj////8////CgAAAAAAAAAApAABAAH3/////P///woAAAAAAAAAAJYAAQAL
-</value>
-  </data>
-  <data name="txtAsm.Text" xml:space="preserve">
-    <value>  __asm4GCN myAsmFunc (float*,float*)
-  {
-    // use a #define shorten tbuffer_load instruction
-    #define _F32_ 0 offen format:[BUF_DATA_FORMAT_32,BUF_NUM_FORMAT_FLOAT]
-    
-    // variable decelerations with a specified register (common for params)
-    s8u  addr0 s[2:3]
-    s16u addr1 s[4:7], addr2 s[8:11], addr3 s[12:15]
-    v4b  laneId v0  // v0 is pre-loaded with lane id
-    
-    // normal variable decelerations (first free register is assigned)
-    s4u  myAddress1, myAddress2
-    v4b  vec1
-                                                        // Loc| Binary |BinaryExt
-    s_buffer_load_dword  myAddress1, addr1, 0x04        // 00|C2000504|
-    s_buffer_load_dword  myAddress2, addr1, 0x18        // 04|C2008518|
-    s_waitcnt     lgkmcnt(0)                            // 08|BF8C007F|
-    s_min_u32     myAddress1, myAddress1, 0x0000ffff    // 0C|8380FF00|0000FFFF
-    s_buffer_load_dword  s4, addr2, 0x00                // 14|C2020900|
-    v_mov_b32     vec1, myAddress1                      // 18|7E020200|
-    v_mul_i32_i24 vec1, addr3, vec1                     // 1C|1202020C|
-    v_add_i32     laneId, vcc, laneId, vec1             // 20|4A000300|
-    v_add_i32     laneId, vcc, myAddress2, laneId       // 24|4A000001|
-    v_lshlrev_b32 laneId, 2, laneId                     // 28|34000082|
-    //ren laneId vec2
-    s_load_dwordx4 addr3, addr0, 0x60                   // 2C|C0860360|
-    s_waitcnt     lgkmcnt(0)                            // 30|BF8C007F|
-    v_add_i32     vec1, vcc, s4, laneId                   // 34|4A020004|
-    tbuffer_load_format_x  vec1, vec1, addr3, _F32_     // 38|EBA01000|80030101
-    s_buffer_load_dword  myAddress1, addr2, 0x04        // 40|C2000904|
-    s_load_dwordx4 addr1, addr0, 0x68                   // 44|C0820368|
-    s_waitcnt     lgkmcnt(0)                            // 48|BF8C007F|
-    v_add_i32     laneId, vcc, myAddress1, laneId           // 4C|4A000000|
-    free myAddress1, myAddress2  // var is freed and register returned to pool.
-    s_waitcnt     vmcnt(0)                              // 50|BF8C0F70|
-    v_add_f32     vec1, vec1, vec1                      // 54|10020301|
-    tbuffer_store_format_x vec1, laneId, addr1, _F32_     // 58|EBA41000|80010100
-    s_endpgm                                            // 60|BF810000|
-  };
-  
-  // This is not used here but is what generates the above assembly.
-  // __kernel and __asm4GCN blocks can be used in the same clProgram
-  __kernel void myOpenClFunc ( __global float* cl_input, __global float* cl_output ) 
-  { 
-      size_t i = get_global_id(0);
-      cl_output[i] = cl_input[i] + cl_input[i];
-  };</value>
   </data>
   <metadata name="saveFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
     <value>238, 17</value>

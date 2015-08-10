@@ -14,7 +14,8 @@ namespace GcnTools
     /// </summary>
     public class GcnBlock
     {
-        /// <summary>gcnStmts is a list of GcnStmt that hold information on GCN Asm instructions. GCN instructions get converted to gcnStmts. </summary>
+        /// <summary>Contains a list of Stmts that contain GCN Asm instructions information. 
+        /// GCN instructions get converted to gcnStmts.</summary>
         public List<Stmt> gcnStmts = new List<Stmt>();
         /// <summary>This is a class that holds label information.</summary>
         public Labels labels = new Labels();
@@ -27,7 +28,8 @@ namespace GcnTools
         /// <summary>
         /// Compiles for both specifications and binary output. 
         /// </summary>
-        public byte[] CompileFull(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage, out List<RegUsage> vRegUsage, out int binSize, out string logOutput, out bool compileSuccessful)
+        public byte[] CompileFull(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage, 
+            out List<RegUsage> vRegUsage, out int binSize, out string logOutput, out bool compileSuccessful)
         {
             Log log = new Log();
             vars = new Variables(UseRegPool: true, CalcRegUsage: true, log:log);
@@ -85,13 +87,22 @@ namespace GcnTools
         private byte[] Compile(string[] srcLines, out int binSize, Log log)
         {
             // log.WriteLine("Starting Lines: {0} ms", startedAt.ElapsedMilliseconds);
+            // StringBuilder sb = new StringBuilder();
+            //Future: Maybe use string builder here
 
             // apply #defines, strip out comments, cleanup, record last time each var is used.
             bool inCommentMode = false;
             List<Variable> pendingNewVarsToAddToNextStmt = new List<Variable>(); ; // pending New Variables To Add To Next Stmt
             List<Label> pendingLabelsToAddToNextStmt = new List<Label>(); ; // pending New Labels that need a Stmt attached
+            
             for (int line = 1; line < srcLines.Length + 1; line++)  // from lines 1 to Last
-                PreProcess(ref srcLines[line - 1], ref inCommentMode, line, ref pendingNewVarsToAddToNextStmt, ref pendingLabelsToAddToNextStmt, log);
+            {
+                string curLine = srcLines[line - 1];
+                while (curLine.EndsWith(@"\"))
+                    curLine = curLine.Remove(curLine.Length-1) + srcLines[line++];
+
+                PreProcess(curLine, ref inCommentMode, line, ref pendingNewVarsToAddToNextStmt, ref pendingLabelsToAddToNextStmt, log);
+            }
 
             // Process remaining labels that pointed to exit (since there are no stmt-headers after the last statement, exit labels need .)
             foreach (Label label in pendingLabelsToAddToNextStmt)
@@ -99,7 +110,7 @@ namespace GcnTools
                 label.isAtEnd = true;
                 labels.AddLabel(label, log);
             }
-
+            
             // automatic variable freeing
             vars.ProcessAutomaticFreeing(gcnStmts);
 
@@ -131,9 +142,9 @@ namespace GcnTools
                 if (stmt.opSize == 0)
                     log.WriteLine("Stmt {0} had an opSizeOfZero");
                 if (stmt.locInBin != loc)
-                    log.WriteLine("stmt.locInBin ({0}) might not correct.", stmt.locInBin);
+                    log.WriteLine("stmt.locInBin ({0}) might not be correct.", stmt.locInBin);
                 if (stmt.GcnStmtId != i)
-                    log.WriteLine("stmt.GcnStmtId ({0}) might not correct.", stmt.GcnStmtId);
+                    log.WriteLine("stmt.GcnStmtId ({0}) might not be correct.", stmt.GcnStmtId);
                 loc += stmt.opSize;
             }
 
@@ -224,12 +235,21 @@ namespace GcnTools
                     string optionsMax = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
                     {
                         string labelName = m.Value.Remove(0, 1);
-                        int label_loc = labels.GetNearestLabel(labelName, stmt.lineNum, log).firstStmt.GcnStmtId;
-                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
-                        int max = maxDists[label_loc] - maxDists[stmt.GcnStmtId] - 1;
-                        minDistance += min;
-                        maxDistance += max;
-                        return max.ToString();
+                        Label label;
+                        if (labels.GetNearestLabel(labelName, stmt.lineNum, out label))
+                        {
+                            int min = minDists[label.firstStmt.GcnStmtId] - minDists[stmt.GcnStmtId] - 1;
+                            int max = maxDists[label.firstStmt.GcnStmtId] - maxDists[stmt.GcnStmtId] - 1;
+                            minDistance += min;
+                            maxDistance += max;
+                            return max.ToString();
+                        }
+                        else
+                        {
+                            log.lineNum = stmt.lineNum;
+                            log.Error("Cannot find Label '{0}'", labelName);
+                            return "0"; // if label not found just return zero
+                        }
                     });
 
                     // If the jump length is known then lets finish this stmt now and short circuit to the next stmt.
@@ -273,9 +293,18 @@ namespace GcnTools
                     string optionsMin = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
                     {
                         string labelName = m.Value.Remove(0, 1);
-                        int label_loc = labels.GetNearestLabel(labelName, stmt.lineNum, log).firstStmt.GcnStmtId; ;
-                        int min = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
-                        return min.ToString();
+                        Label label;
+                        if (labels.GetNearestLabel(labelName, stmt.lineNum, out label))
+                        {
+                            int min = minDists[label.firstStmt.GcnStmtId] - minDists[stmt.GcnStmtId] - 1;
+                            return min.ToString();
+                        }
+                        else
+                        {
+                            log.lineNum = stmt.lineNum;
+                            log.Error("Cannot find Label '{0}'", labelName);
+                            return "0"; // if label not found, just return zero
+                        }
                     });
 
 
@@ -312,10 +341,19 @@ namespace GcnTools
                 stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
                 {
                     string labelName = m.Value.Remove(0, 1);
-                    Label nearestLabel = labels.GetNearestLabel(labelName, stmt.lineNum, log);
-                    int label_loc = nearestLabel.isAtEnd ? gcnStmts.Count : nearestLabel.firstStmt.GcnStmtId;
-                    int distance = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
-                    return distance.ToString();
+                    Label nearestLabel;
+                    if (labels.GetNearestLabel(labelName, stmt.lineNum, out nearestLabel))
+                    {
+                        int label_loc = nearestLabel.isAtEnd ? gcnStmts.Count : nearestLabel.firstStmt.GcnStmtId;
+                        int distance = minDists[label_loc] - minDists[stmt.GcnStmtId] - 1;
+                        return distance.ToString();
+                    }
+                    else
+                    {
+                        log.lineNum = stmt.lineNum;
+                        log.Error("Cannot find Label '{0}'", labelName);
+                        return "0";
+                    }
                 });
 
                 log.lineNum = stmt.lineNum;
@@ -324,7 +362,7 @@ namespace GcnTools
             }
         }
 
-        private void PreProcess(ref string curLine, ref bool inCommentMode, int lineNum, ref List<Variable> pendingNewVarsToAddToNextStmt,
+        private void PreProcess(string curLine, ref bool inCommentMode, int lineNum, ref List<Variable> pendingNewVarsToAddToNextStmt,
             ref List<Label> pendingLabelsToAddToNextStmt, Log log)
         {
             // Skip empty lines
@@ -356,14 +394,13 @@ namespace GcnTools
                 curLine = Regex.Replace(curLine, @"/\*.*", "");
             }
 
-            // Split out a line (label_name + statements + comment)
-            Match l = Regex.Match(curLine, @"^\s*(?:([a-z_][a-z0-9_]*):)?\s*(.*?)\s*;?\s*(?://.*)?$");
-            Group labelMatch = l.Groups[1];
-            curLine = l.Groups[2].Value;
-
-            // Record any labels on the line
-            if (labelMatch.Success)
-                pendingLabelsToAddToNextStmt.Add(new Label() { labelName = labelMatch.Value, lineNum = lineNum });
+            // Strip out "//" style comments
+            int indexOfComment = curLine.IndexOf(@"//");
+            if ( indexOfComment >= 0 )
+                if (indexOfComment == 0)
+                    return; // this entire line is in comment mode
+                else
+                    curLine = curLine.Remove(indexOfComment).TrimEnd();
 
             ///////// Process new #Defines /////////
             // lets see if the first word is a #define
@@ -419,8 +456,10 @@ namespace GcnTools
 
             /////////   Replace Defines   /////////
             // Lets check this line to see if there are any defines in it.
-            foreach (Define define in defines)
+            // We go in reverse order in case there are any nested #defines
+            for (int i = defines.Count - 1; i >= 0; i--)
             {
+                Define define = defines[i];
                 if (define.defParams == null)
                     curLine = curLine.Replace(define.name, define.data); // curLine = Regex.Replace(curLine, define.name, define.data);
                 else
@@ -457,17 +496,27 @@ namespace GcnTools
             {
                 string stmtText = stmts[stmtNumberOnLine];
 
+                // Split out label from statement and record any labels on the line
+                Match l = Regex.Match(stmtText, @"([a-z_][a-z0-9_]*):(\s|$)");
+                if (l.Success)
+                {
+                    pendingLabelsToAddToNextStmt.Add(new Label() { labelName = l.Groups[1].Value, lineNum = lineNum });
+                    if (l.Length == stmtText.Length)
+                        continue;
+                    stmtText = stmtText.Remove(0, l.Length);
+                }
+
                 // Extract first word, and options
                 char[] delimiterChars = { ',', ' ' };
                 string[] commands = stmtText.Split(delimiterChars, 2, StringSplitOptions.RemoveEmptyEntries);
                 string firstWord = commands[0];
-                string options = commands.Count() > 1 ? commands[1].Trim() : "";
+                //string options = commands.Count() > 1 ? commands[1].Trim() : "";
 
                 Stmt stmt = new Stmt()
                 {
-                    options = options,
+                    options = commands.Count() > 1 ? commands[1].Trim() : "",
                     lineNum = lineNum,
-                    lineDepth = stmtNumberOnLine++,
+                    lineDepth = stmtNumberOnLine,
                     fullStmt = stmtText,
                     GcnStmtId = gcnStmts.Count,
                 };
@@ -477,28 +526,20 @@ namespace GcnTools
                 // ren cat dog
                 if (firstWord == "free")
                 {
-                    string[] matches = options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
+                    string[] matches = stmt.options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
                     foreach (string name in matches)
                         vars.FreeVariable(name, gcnStmts);
                     continue;
                 }
 
-                //if (firstWord == "ren")
-                //{
-                //    string[] matches = options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
-                //    for (int i = 1; i < commands.Length; i += 2)
-                //        vars.Rename(matches[i - 1], matches[i], log);
-                //    continue;
-                //}
-
                 ///////// Process #S_POOL / #V_POOL  -->  sRegPool/vRegPool /////////
                 //string cmd = Regex.Match(curLine, @"(?<=^\ *\#)(define|ref|[vs]_pool)").Value;
-                if (firstWord == "v_pool" || firstWord == "s_pool")
+                if (firstWord == "#v_pool" || firstWord == "#s_pool")
                 {
                     // skip line if #S_POOL / #V_POOL
                     if (!vars.UsingRegPools)
                         continue;
-                    
+
                     // Show warning if there are already existing vars.
                     if (vars.Count > 0)
                         log.Warning("#S_POOL / #V_POOL normally occur in the header area. Having this command in the "
@@ -522,67 +563,54 @@ namespace GcnTools
 
                     continue;  // we are done with this statement.
                 }
-                
 
-                ///////// Process Variable Decorations /////////
-                Match r1 = Regex.Match(firstWord, @"(?<1>[sv])(?<2>1|2|4|8|16)(?<3>[fiub])");
-                if (r1.Success)
+                ///////// Process Variable Declarations /////////
+                // Example: s_mov_b32 v8u ttt, aaa, bbb
+                // Example: s_mov_b32 v8u ttt S4, aaa, bbb
+                // Example: v4u myVar0 s[2:3]; 
+                // Example: s4u myVar1 myVar0
+                // Single line Declarations
+                Match m = Regex.Match(firstWord, @"(?<1>s|v)(?<2>1|2|4|8|16)(?<3>[fiub])");
+                if (m.Success)
                 {
-                    char type = r1.Groups[1].Value[0];
-                    int size = Int32.Parse(r1.Groups[2].Value);
-                    char dataType = r1.Groups[3].Value[0];
+                    char type = m.Groups[1].Value[0];
+                    int size = Int32.Parse(m.Groups[2].Value);
+                    char dataType = m.Groups[3].Value[0];
 
-                    MatchCollection r2 = Regex.Matches(options,
-                        @"(?<4>[a-z_][a-z_0-9]*)" +
-                        @"(?<8>\ +(?<5>[sv])(?:(?<6>\d+)|(?:\[(?<6>\d+):(?<7>\d+)\])))?\s*(,|$)\s*");
-                    if (r2.Count > 0) // there should be at least one match
-                    {
-                        foreach (Match m in r2)
-                        {
-                            GroupCollection g = m.Groups;
-                            string name = g[4].Value;
-                            Variable var;
-
-                            if (g[8].Success)
-                            {
-                                int requestedReg = Int32.Parse(g[6].Value);
-                                var = vars.Add(name, (type == 's'), size, dataType, gcnStmts.LastOrDefault(), requestedReg);
- 
-                                // error checking
-                                if (r1.Groups[7].Success)
-                                    if ((int.Parse(g[7].Value) - requestedReg + 1) != (size / 4))
-                                        log.Warning("The variable size({0}) does not match the size of {1}[#:#]", size, type);
-                                if (r1.Groups[1].Value != g[5].Value)
-                                    log.Warning("The variable type ({0}) does not match the register type {1}", type, g[5].Value);
-                            }
-                            else
-                                var = vars.Add(name, (type == 's'), size, dataType, gcnStmts.LastOrDefault());
-
-                            if (var != null) //null means there was a warning/error
-                                pendingNewVarsToAddToNextStmt.Add(var);
-                        }
-                    }
-                    else
-                        log.Error("unrecognized format. Format: (s|v)(1|2|4|8|16)(f|i|u|b) varName [s#|v#]");
-
+                    vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, stmt.options);
                     continue;
+                }
+
+                // Inline Declarations
+                var inlines = Regex.Matches(stmt.options, @"(?<![a-z_0-9])(?<2>s|v)(?<3>1|2|4|8|16)(?<4>[fiub]) " +
+                    @"(?<5>(?<6>[a-z_][a-z_0-9]*)" +
+                    @"( [a-z_][a-z_0-9]*(\[\d+(?::\d+)\])?)?)");
+
+                foreach (Match m3 in inlines)
+                {
+                    char type = m3.Groups[2].Value[0];
+                    int size = Int32.Parse(m3.Groups[3].Value);
+                    char dataType = m3.Groups[4].Value[0];
+
+                    vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, m3.Groups[5].Value);
+                    stmt.options = stmt.options.Remove(m3.Index, m3.Length).Insert(m3.Index, m3.Groups[6].Value);
                 }
 
                 ///////// lookup instruction details /////////
                 if (!ISA_DATA.isa_inst_dic.TryGetValue(firstWord, out stmt.inst))
                 {
-                    log.Error("'{0}' is an unrecognized instruction", firstWord);
+                    log.Error("'{0}' is not a recognized instruction", firstWord);
                     continue;
                 }
 
                 ///////// Record var names and location making sure to exclude reserved words /////////
-                var foundVars = Regex.Matches(options, @"(?<=,|\ |^)(?![vs]\d+)(([a-z_][a-z0-9_]*)(?:\[(\d)\])?)(?=,|\ |$)");
+                var foundVars = Regex.Matches(stmt.options, @"(?<=,|\ |^)(?![vs]\d+)(([a-z_][a-z0-9_]*)(?:\[(\d+)\])?)(?=,|\ |$)");
                 foreach (Match r in foundVars)
                 {
                     //Future: save char location so we don't have to search for the variable again when we do the replacement.
-                    
+
                     string varName = r.Value;
-                    
+
                     // ignore reserved words
                     if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, varName) >= 0)
                         continue;
@@ -592,25 +620,21 @@ namespace GcnTools
                         continue;
 
                     int len = varName.Length;
-                    bool hasIndex = (varName[len - 1] == ']'); //todo: cleanup
+                    bool hasIndex = varName.EndsWith("]");
                     int index = 0;
                     int startPos = r.Index;
 
                     if (hasIndex)
                     {
-                        string name = r.Groups[2].Value;
-                        string digits = r.Groups[3].Value;
-                        varName = name;
-                        index = Int32.Parse(digits);
+                        varName = r.Groups[2].Value;
+                        index = int.Parse(r.Groups[3].Value);
                     }
 
                     // Lets lookup the GcnVar to make sure it exists and also retrieve it.
                     vars.MarkVariableUsedInStmt(stmt, varName, index, startPos, len);
-  
                 };
 
                 ///////// Lets add the stmt to the list /////////
-
                 // Before adding, lets link any pending statements.
                 foreach (Label label in pendingLabelsToAddToNextStmt)
                 {
@@ -622,13 +646,15 @@ namespace GcnTools
                 // Also, lets link-up any new variables 
                 if (pendingNewVarsToAddToNextStmt.Count > 0)
                 {
+                    foreach (Variable v in pendingNewVarsToAddToNextStmt)
+                        v.stmtDeclared = stmt;
+
                     stmt.newVars = pendingNewVarsToAddToNextStmt;
                     pendingNewVarsToAddToNextStmt = new List<Variable>();
                 }
                 gcnStmts.Add(stmt);
             }
         }
-
 
         //private void ProcessLine(string curLine, List<GcnStmt> needLabelFilled, int line, Log log)
         private void ProcessStmt(Stmt stmt, List<Stmt> needLabelFilled, Log log)

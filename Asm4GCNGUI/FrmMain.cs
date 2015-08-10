@@ -11,8 +11,6 @@ using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
-using System.Security.AccessControl;    // for DirectoryHasPermission
-using System.Security.Principal;        // for DirectoryHasPermission
 using FastColoredTextBoxNS;
 using AC = AutocompleteMenuNS;          // for autocompleteMenu1 
 using System.Runtime.InteropServices;   // for NotepadHelper
@@ -113,7 +111,7 @@ namespace Asm4GcnGUI
 
             bool success = gcn.GcnCompile(txtAsm.Text);
 
-            if (String.IsNullOrWhiteSpace(gcn.env.lastMessage))
+            if (string.IsNullOrWhiteSpace(gcn.env.lastMessage))
                 txtOutput.AppendText("INFO: (no Errors/Warnings in GCN kernel)\r\n");
             else
                 txtOutput.AppendText(gcn.env.lastMessage);
@@ -139,7 +137,7 @@ namespace Asm4GcnGUI
 
                 foreach (CompilerError error in results.Errors)
                     txtOutput.AppendText(String.Format("{0} ({1}) Line:{2}: {3}\r\n", 
-                        error.IsWarning ? "WARNING: " : "ERROR: ", error.ErrorNumber, error.Line, error.ErrorText));
+                        error.IsWarning ? "WARN: " : "ERROR: ", error.ErrorNumber, error.Line, error.ErrorText));
 
                 if (results.Errors.HasErrors)
                     success = false;
@@ -308,11 +306,11 @@ namespace Asm4GcnGUI
         
         private void txtAsm_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Range range = (sender as FastColoredTextBox).VisibleRange;
+            Range range = e.ChangedRange; // txtAsm.VisibleRange;
 
             // Text Template Transformations
-            e.ChangedRange.ClearStyle(TTTStyle);
-            e.ChangedRange.SetStyle(S_OppStyle, @"\[\[.*?\]\]");
+            range.ClearStyle(TTTStyle);
+            range.SetStyle(S_OppStyle, @"\[\[.*?\]\]");
 
             // Comments
             range.ClearStyle(GreenStyle);
@@ -322,7 +320,7 @@ namespace Asm4GcnGUI
 
             // Commands
             range.ClearStyle(CommandsStyle);
-            range.SetStyle(CommandsStyle, @"(?<=(\r\n|;)\s*)([sv](1|2|4|8|16)[iufb]|free|ren|#define)(?=\s)");
+            range.SetStyle(CommandsStyle, @"(?<!=[a-z0-9_])([sv](1|2|4|8|16)[iufb]|free|#define)(?=\s)");
 
             // Registers
             range.ClearStyle(RegistersStyle);
@@ -334,7 +332,7 @@ namespace Asm4GcnGUI
             
             // Defines var names  (i.e.  _myDefine_ )
             range.ClearStyle(DefineStyle);
-            range.SetStyle(DefineStyle, @"(?<=[\s,;])(_[a-zA-Z0-9_]+_)(?=[\s,;])");
+            range.SetStyle(DefineStyle, @"(?<=[\ ,;])(_[a-zA-Z0-9_]+_)(?!=[a-zA-Z0-9_]+)");
 
             // initialize S_InstNames, V_InstNames, and O_InstNames
             if (S_InstNames == null)
@@ -365,19 +363,19 @@ namespace Asm4GcnGUI
                 O_InstNames = new Regex(o.ToString());
             }
 
-            e.ChangedRange.ClearStyle(S_InstNamesStyle);
-            e.ChangedRange.ClearStyle(V_InstNamesStyle);
-            e.ChangedRange.ClearStyle(O_InstNamesStyle);
-            e.ChangedRange.SetStyle(S_InstNamesStyle, S_InstNames);
-            e.ChangedRange.SetStyle(V_InstNamesStyle, V_InstNames);
-            e.ChangedRange.SetStyle(O_InstNamesStyle, O_InstNames);
+            range.ClearStyle(S_InstNamesStyle);
+            range.ClearStyle(V_InstNamesStyle);
+            range.ClearStyle(O_InstNamesStyle);
+            range.SetStyle(S_InstNamesStyle, S_InstNames);
+            range.SetStyle(V_InstNamesStyle, V_InstNames);
+            range.SetStyle(O_InstNamesStyle, O_InstNames);
 
-            e.ChangedRange.ClearStyle(S_OppStyle);
-            e.ChangedRange.ClearStyle(V_OppStyle);
-            e.ChangedRange.ClearStyle(constantStyle);
-            e.ChangedRange.SetStyle(S_OppStyle, @"[\s,][sS](\bin+|\[\bin+:\bin+\])[\s,]");
-            e.ChangedRange.SetStyle(V_OppStyle, @"[\s,][vV](\bin+|\[\bin+:\bin+\])[\s,]");
-            e.ChangedRange.SetStyle(constantStyle, @"[\s,](?i:" +
+            range.ClearStyle(S_OppStyle);
+            range.ClearStyle(V_OppStyle);
+            range.ClearStyle(constantStyle);
+            range.SetStyle(S_OppStyle, @"[\s,][sS](\bin+|\[\bin+:\bin+\])[\s,]");
+            range.SetStyle(V_OppStyle, @"[\s,][vV](\bin+|\[\bin+:\bin+\])[\s,]");
+            range.SetStyle(constantStyle, @"[\s,](?i:" +
                 @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + // hex values 0x12AB
                 @"(?:0(?<1>o)(?<2>[0-9a-f]+))|" + // oct values 0o7564
                 @"(?:0(?<1>b)(?<2>[0-9a-f]+))|" + // bin values 0b1101010
@@ -400,7 +398,7 @@ namespace Asm4GcnGUI
 
             //range.ClearStyle(GreenStyle);
             e.ChangedRange.SetStyle(InfoStyle, @"^INFO:", RegexOptions.Multiline);
-            e.ChangedRange.SetStyle(WarnStyle, @"^WARNING:", RegexOptions.Multiline);
+            e.ChangedRange.SetStyle(WarnStyle, @"^WARN:", RegexOptions.Multiline);
             e.ChangedRange.SetStyle(ErrorStyle, @"^ERROR:", RegexOptions.Multiline);
         }
 

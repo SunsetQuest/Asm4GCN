@@ -156,14 +156,14 @@ namespace GcnTools
         // 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
         // - - F R - F R R - R -  -  R  R  R  R
 
-        // Reserves a given number of consecutive registers 
+        // Reserves a given number of consecutive registers
         /// <summary>
         /// Reserves one or more consecutive registers from a reg pool. This function will try to find a 
         /// good location by fitting the register(s) in the smallest contiguous location.
         /// </summary>
         /// <param name="sizeNeeded">This is the number contiguous physical registers needed. The size in words.</param>
         /// <returns>The register number the variable was assigned to or -1 if unable to reserve.</returns>
-        public int ReserveRegs(int sizeNeeded)
+        public int ReserveRegs(int sizeNeeded, int alignment)
         {
             if (sizeNeeded <= 0)
             {
@@ -182,52 +182,64 @@ namespace GcnTools
             int bestScore = 0;
             int curSz = 0; //we are walking through free regs, this is the current size of the contiguous set
             int curBegIdx = 0; //we are walking through free regs, this is the start of the current contiguous set
+            bool aligned = (slots[0].regNo % alignment == 0);
 
             for (int i = 0; i < slots.Length; i++)
             {
-                if (slots[i].usageSerialNumber == 0)
+                curSz++;
+
+                if (slots[i].usageSerialNumber > 0)
                 {
-                    int reg = slots[i].regNo;
-
-                    bool isLastInSet = false;
-                    if (slots[i].end == reg)  // if this is last reg in local set, then this is last
-                        isLastInSet = true;
-                    else if (slots[i + 1].usageSerialNumber > 0) // if next is used, then this is last
-                        isLastInSet = true;
-
-                    curSz++;
-
-                    if (isLastInSet)
-                    {
-                        if (curSz >= sizeNeeded)
-                        {
-                            // if exact size of reg then score 1000 and return
-                            if (sizeNeeded == slots[i].size)
-                            {
-                                bestBegIdx = curBegIdx;
-                                break; // winner found, this is the best case so stop looking
-                            }
-
-                            // if size fits in partial used slot
-                            int fitScore = 1000 - curSz + sizeNeeded;
-                            if (fitScore > bestScore)
-                            {
-                                //bestSz = curSz;
-                                bestBegIdx = curBegIdx;
-                                bestScore = fitScore;
-                            }
-                        }
-                        curBegIdx = i + 1;
-                        curSz = 0;
-                    }
-                }
-                else
-                {
-                    //bestSz = curSz;
                     curBegIdx = i + 1;
                     curSz = 0;
+                    aligned = false;
+                    continue;
                 }
+
+                aligned |= (slots[i].regNo % alignment == 0);
+                if (!aligned)
+                {
+                    curBegIdx = i + 1;
+                    // curSz = 0;
+                    continue;
+                }
+
+                if (slots[i].end == slots[i].regNo  // if this is last reg in local set, then this is last
+                    || slots[i + 1].usageSerialNumber > 0) // if next is used, then this is last
+                    //|| curSz >= sizeNeeded + 16)  // for performance, lets stop around with a free chunk with a size of 16 instead of to 128
+                {
+                    if (curSz >= sizeNeeded)
+                    {
+                        // if exact size of reg then score 1000 and return
+                        if (sizeNeeded == slots[i].size)
+                        {
+                            bestBegIdx = curBegIdx;
+                            break; // winner found, this is the best case so stop looking
+                        }
+
+                        //// it seems like we hit the ending free space, for performance lets just stop here and not go to 128.
+                        //if (curSz >= sizeNeeded + 16)
+                        //{
+                        //    bestBegIdx = curBegIdx;
+                        //    break;
+                        //}
+
+                        // if size fits in partial used slot
+                        int fitScore = 1000 - curSz + sizeNeeded;
+                        if (fitScore > bestScore)
+                        {
+                            //bestSz = curSz;
+                            bestBegIdx = curBegIdx;
+                            bestScore = fitScore;
+                        }
+                    }
+                    curBegIdx = i + 1;
+                    curSz = 0;
+                    aligned = false;
+                }
+
             }
+            
 
             // only reserve the regs if a space was found
             if (bestBegIdx >= 0)
@@ -236,6 +248,7 @@ namespace GcnTools
                 for (int i = bestBegIdx; i < bestBegIdx + sizeNeeded; i++)
                     slots[i].usageSerialNumber = usageSerialNumber;
 
+                //Console.WriteLine(slots[bestBegIdx].regNo);
                 return slots[bestBegIdx].regNo;
             }
             else
@@ -273,7 +286,7 @@ namespace GcnTools
 
             if (index < 0)
             {
-                log.Error("The register {0} is trying to reserve a register that is not in the reserved register space.", regNum);
+                log.Error("The register {0} is not in the allowed register space.", regNum);
                 return -1; //the regNum was not found in the RegPool so no need to reserve it.
             }
 
@@ -289,7 +302,7 @@ namespace GcnTools
                     slots[j].usageSerialNumber = usageSerialNumber;
                 else
                 {
-                    log.Error("Unable to mark register " + regNum + " as used because it's already used.");
+                    log.Error("Unable to use register {0} with a size of {1} because register {2} is already in use.", regNum, sizeNeeded, slots[j].regNo);
                     break;
                 }
 

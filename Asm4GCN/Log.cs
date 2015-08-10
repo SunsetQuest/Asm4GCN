@@ -60,12 +60,12 @@ namespace GcnTools
 
         public void Warning(string text)
         {
-            Append(String.Format("WARNING: [LINE:{0}] {1}\r\n", lineNum, text));
+            Append(String.Format("WARN: [LINE:{0}] {1}\r\n", lineNum, text));
         }
 
         public void Warning(string format, params object[] arg)
         {
-            Append(String.Format("WARNING: [LINE:" + lineNum + "] " + format + "\r\n", arg));
+            Append(String.Format("WARN: [LINE:" + lineNum + "] " + format + "\r\n", arg));
         }
 
         public void Info(string text)

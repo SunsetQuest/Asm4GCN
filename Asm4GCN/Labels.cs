@@ -19,33 +19,34 @@ namespace GcnTools
         /// <param name="name">The label to search for.</param>
         /// <param name="line">Search for matches near this line number.</param>
         /// <param name="log">A log to write warnings/errors to.</param>
-        /// <returns></returns>
-        public Label GetNearestLabel(string name, int line, Log log)
+        /// <returns>Returns True if found.</returns>
+        public bool GetNearestLabel(string name, int line, out Label closestMatch)
         {
             List<Label> ids;
-            Label closestMatch = null;
+            closestMatch = null;
+            bool found = labelDic.TryGetValue(name, out ids);
 
-            if (labelDic.TryGetValue(name, out ids))
+            if (found)
             {
                 // if only one match lets shortcut and take only that one
                 if (ids.Count == 1)
-                    return ids[0];
-
-                int closestDistance = int.MaxValue;
-                foreach (Label l in ids)
+                    closestMatch = ids[0];
+                else
                 {
-                    int thisDistance = Math.Abs(line - l.lineNum);
-                    if (thisDistance < closestDistance)
+                    int closestDistance = int.MaxValue;
+                    foreach (Label l in ids)
                     {
-                        closestDistance = thisDistance;
-                        closestMatch = l;
+                        int thisDistance = Math.Abs(line - l.lineNum);
+                        if (thisDistance <= closestDistance)
+                        {
+                            closestDistance = thisDistance;
+                            closestMatch = l;
+                        }
                     }
                 }
             }
-            else
-                log.Error("Cannot find Label '{0}'", name);
 
-            return closestMatch ?? new Label();
+            return found;
         }
 
         /// <summary>

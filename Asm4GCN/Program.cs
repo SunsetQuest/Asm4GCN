@@ -152,7 +152,7 @@ namespace GcnTools
                 string logOutput;
                 bool success;
                 byte[] bin = Asm4GCN.CompileForBin(lines, out gcnStmts, out binSize, out logOutput, out success);
-                log.Append(logOutput);
+                // log.Append(logOutput);
                 if (success)
                 {
                     try

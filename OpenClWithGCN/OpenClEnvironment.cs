@@ -3,7 +3,6 @@
 // Source & Executable can be used in commercial applications and is provided AS-IS without any warranty.
 
 using NOpenCL;
-using System;
 using System.Collections.Generic;
 using GcnTools;
 

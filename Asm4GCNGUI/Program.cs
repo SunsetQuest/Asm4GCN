@@ -2,8 +2,6 @@
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without any warranty.
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace Asm4GcnGUI

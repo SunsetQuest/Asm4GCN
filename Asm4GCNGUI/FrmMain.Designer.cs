@@ -133,7 +133,7 @@
             // 
             this.statusStrip1.Location = new System.Drawing.Point(0, 910);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(723, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(659, 22);
             this.statusStrip1.TabIndex = 1;
             this.statusStrip1.Text = "statusStrip1";
             // 
@@ -656,6 +656,7 @@
             this.txtOutput.Cursor = System.Windows.Forms.Cursors.IBeam;
             this.txtOutput.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtOutput.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.txtOutput.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtOutput.IsReplaceMode = false;
             this.txtOutput.Location = new System.Drawing.Point(0, 830);
             this.txtOutput.Name = "txtOutput";
@@ -664,7 +665,7 @@
             this.txtOutput.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this.txtOutput.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtOutput.ServiceColors")));
             this.txtOutput.ShowLineNumbers = false;
-            this.txtOutput.Size = new System.Drawing.Size(723, 80);
+            this.txtOutput.Size = new System.Drawing.Size(659, 80);
             this.txtOutput.TabIndex = 3;
             this.txtOutput.WordWrap = true;
             this.txtOutput.Zoom = 100;
@@ -677,7 +678,7 @@
             this.splitter1.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.splitter1.Location = new System.Drawing.Point(0, 820);
             this.splitter1.Name = "splitter1";
-            this.splitter1.Size = new System.Drawing.Size(723, 10);
+            this.splitter1.Size = new System.Drawing.Size(659, 10);
             this.splitter1.TabIndex = 4;
             this.splitter1.TabStop = false;
             // 
@@ -692,7 +693,7 @@
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.Padding = new System.Drawing.Point(6, 1);
             this.tabControl1.SelectedIndex = 0;
-            this.tabControl1.Size = new System.Drawing.Size(723, 820);
+            this.tabControl1.Size = new System.Drawing.Size(659, 820);
             this.tabControl1.TabIndex = 5;
             // 
             // tabHost
@@ -701,7 +702,7 @@
             this.tabHost.Location = new System.Drawing.Point(4, 23);
             this.tabHost.Name = "tabHost";
             this.tabHost.Padding = new System.Windows.Forms.Padding(3);
-            this.tabHost.Size = new System.Drawing.Size(715, 793);
+            this.tabHost.Size = new System.Drawing.Size(651, 793);
             this.tabHost.TabIndex = 1;
             this.tabHost.Text = "C# Host";
             this.tabHost.UseVisualStyleBackColor = true;
@@ -722,7 +723,7 @@
             this.autocompleteMenu1.SetAutocompleteMenu(this.txtHost, null);
             this.txtHost.AutoIndentCharsPatterns = "\n^\\s*[\\w\\.]+(\\s\\w+)?\\s*(?<range>=)\\s*(?<range>[^;]+);\n^\\s*(case|default)\\s*[^:]*(" +
     "?<range>:)\\s*(?<range>[^;]+);\n";
-            this.txtHost.AutoScrollMinSize = new System.Drawing.Size(627, 840);
+            this.txtHost.AutoScrollMinSize = new System.Drawing.Size(627, 938);
             this.txtHost.BackBrush = null;
             this.txtHost.BracketsHighlightStrategy = FastColoredTextBoxNS.BracketsHighlightStrategy.Strategy2;
             this.txtHost.ChangedLineColor = System.Drawing.Color.Cornsilk;
@@ -734,8 +735,8 @@
             this.txtHost.DelayedTextChangedInterval = 1000;
             this.txtHost.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtHost.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtHost.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtHost.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
+            this.txtHost.Hotkeys = resources.GetString("txtHost.Hotkeys");
             this.txtHost.IsReplaceMode = false;
             this.txtHost.Language = FastColoredTextBoxNS.Language.CSharp;
             this.txtHost.LeftBracket = '(';
@@ -748,7 +749,7 @@
             this.txtHost.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this.txtHost.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtHost.ServiceColors")));
             this.txtHost.ShowFoldingLines = true;
-            this.txtHost.Size = new System.Drawing.Size(709, 787);
+            this.txtHost.Size = new System.Drawing.Size(645, 787);
             this.txtHost.TabIndex = 2;
             this.txtHost.Text = resources.GetString("txtHost.Text");
             this.txtHost.Zoom = 100;
@@ -761,7 +762,7 @@
             this.tabGCN.Location = new System.Drawing.Point(4, 23);
             this.tabGCN.Name = "tabGCN";
             this.tabGCN.Padding = new System.Windows.Forms.Padding(3);
-            this.tabGCN.Size = new System.Drawing.Size(715, 793);
+            this.tabGCN.Size = new System.Drawing.Size(651, 793);
             this.tabGCN.TabIndex = 0;
             this.tabGCN.Text = "GCN";
             this.tabGCN.UseVisualStyleBackColor = true;
@@ -781,7 +782,7 @@
         '\'',
         '\''};
             this.autocompleteMenu1.SetAutocompleteMenu(this.txtAsm, this.autocompleteMenu1);
-            this.txtAsm.AutoScrollMinSize = new System.Drawing.Size(715, 658);
+            this.txtAsm.AutoScrollMinSize = new System.Drawing.Size(627, 1106);
             this.txtAsm.BackBrush = null;
             this.txtAsm.ChangedLineColor = System.Drawing.Color.Cornsilk;
             this.txtAsm.CharHeight = 14;
@@ -792,8 +793,8 @@
             this.txtAsm.DelayedTextChangedInterval = 1000;
             this.txtAsm.DisabledColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))), ((int)(((byte)(180)))));
             this.txtAsm.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.txtAsm.Font = new System.Drawing.Font("Courier New", 9.75F);
             this.txtAsm.HighlightingRangeType = FastColoredTextBoxNS.HighlightingRangeType.VisibleRange;
+            this.txtAsm.Hotkeys = resources.GetString("txtAsm.Hotkeys");
             this.txtAsm.IsReplaceMode = false;
             this.txtAsm.LeftBracket = '{';
             this.txtAsm.LeftBracket2 = '[';
@@ -805,7 +806,7 @@
             this.txtAsm.SelectionColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(0)))), ((int)(((byte)(0)))), ((int)(((byte)(255)))));
             this.txtAsm.ServiceColors = ((FastColoredTextBoxNS.ServiceColors)(resources.GetObject("txtAsm.ServiceColors")));
             this.txtAsm.ShowFoldingLines = true;
-            this.txtAsm.Size = new System.Drawing.Size(709, 787);
+            this.txtAsm.Size = new System.Drawing.Size(645, 787);
             this.txtAsm.TabIndex = 1;
             this.txtAsm.Text = resources.GetString("txtAsm.Text");
             this.txtAsm.Zoom = 100;
@@ -856,7 +857,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(723, 932);
+            this.ClientSize = new System.Drawing.Size(659, 932);
             this.Controls.Add(this.toolStrip1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.splitter1);

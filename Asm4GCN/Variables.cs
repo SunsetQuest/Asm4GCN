@@ -1,9 +1,10 @@
-﻿    // Asm4GCN Assembler by Ryan S White (sunsetquest) http://www.codeproject.com/Articles/872477/Assembler-for-AMD-s-GCN-GPU
-    // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
-    // Source & Executable can be used in commercial applications and is provided AS-IS without warranty.
+﻿// Asm4GCN Assembler by Ryan S White (sunsetquest) http://www.codeproject.com/Articles/872477/Assembler-for-AMD-s-GCN-GPU
+// Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
+// Source & Executable can be used in commercial applications and is provided AS-IS without warranty.
 
-    using System;
-    using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace GcnTools
 {
@@ -37,7 +38,7 @@ namespace GcnTools
 
         /// <summary>sRegPool is a list of available scaler registers for the entire session. If left null then RegPool is not used. If it is used it initializes with regs 0-127 unless a customized register pool is specified using #S/V_POOL.</summary>
         public RegPool sRegPool, vRegPool;
-        
+
         /// <summary>Keeps a usage count of each register size. It also remember the maximum.</summary>
         public RegUsageCalc sRegUsageCalc, vRegUsageCalc;
 
@@ -84,32 +85,107 @@ namespace GcnTools
         //    return success;
         //}
 
-        /// <summary>Adds a GcnVar to the Vars collection and also makes sure that it is valid.</summary>
-        public Variable Add(string name, bool isScaler, int byteSize, char type, Stmt stmt, int fixedRegNo = -1)
+        /// <summary>Adds a GcnVar to the Vars collection while making sure it is valid.</summary>
+        public void AddVariable(List<Variable> pendingNewVarsToAddToNextStmt, Stmt stmt, Log log, char type, int size, char dataType, string options)
         {
-            // make sure the reserved word is not in ISA_DATA.AsmReserveDWords, it will be added regardless
-            if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, name) >= 0)
-                log.Error("'{0}' cannot be used as a register name because it is a reserved word.", name);
-
-            // make sure the variable name is not a common alias
-            else if (ISA_DATA.sRegAliases.ContainsKey(name))
-                log.Error("'{0}' cannot be used as a variable because it is a common register alias.", name);
-
-            // make sure the name is not already added to the dictionary
-            else if (varsByName.ContainsKey(name))
-                log.Error("Variable '{0}' has already been declared.", name);
-
-            // lets now add it to the var dictionary
-            else
+            MatchCollection r2 = Regex.Matches(options,
+                @"(?<4>[a-z_][a-z_0-9]*)" +
+                @"((?<8>\ +(?<5>[sv])(?:(?<6>\d+)|(?:\[(?<6>\d+):(?<7>\d+)\])))|" + // assign exact reg
+                @"(?:\ +(?<9>[a-z_][a-z0-9_]*)(?:\[(?<10>\d+)\])?))?" + // Match to another Vars Reg#
+                @"\s*(,|$)\s*");
+            if (r2.Count <= 0) // there should be at least one match
             {
-                Variable var = new Variable(name, isScaler, byteSize, type, stmt, fixedRegNo);
-                varsByName.Add(name, var);
-                if (fixedRegNo >= 0)
-                    ReserveSpecificRegister(name, isScaler, byteSize, stmt, fixedRegNo);
-                return var;
+                log.Error("The new variable options could not be understood: " + options);
+                return;
             }
 
-            return null;
+            foreach (Match m in r2)
+            {
+                GroupCollection g = m.Groups;
+
+                string name = g[4].Value;
+                string varsRegToCopy = "";
+                int varsRegToCopyIndex = 0;
+                int requestedReg = -1;
+
+                if (g[8].Success)
+                {
+                    requestedReg = Int32.Parse(g[6].Value);
+
+                    // error checking
+                    if (type != g[5].Value[0])
+                        log.Warning("The variable type ({0}) does not match the register type {1}", type, g[5].Value);
+                    if (g[7].Success)
+                        if ((int.Parse(g[7].Value) - requestedReg + 1) != (size / 4))
+                            log.Warning("The variable size({0}) does not match the size of {1}[#:#]", size, type);
+                }
+                else if (g[9].Success)
+                {
+                    varsRegToCopy = g[9].Value;
+                    if (g[10].Success)
+                        varsRegToCopyIndex = int.Parse(g[10].Value);
+
+                    // make sure the name is not already added to the dictionary
+                    Variable copySrc;
+                    if (!varsByName.TryGetValue(varsRegToCopy, out copySrc))
+                    {
+                        log.Error("The past variable '{0}' cannot be found.", varsRegToCopy);
+                        continue;
+                    }
+
+                    // if this is copying a reg from another variable and that variable is fixed then copy the reg now.
+                    if (copySrc.isRegisterNumSpecifed)
+                        requestedReg = copySrc.regNo + varsRegToCopyIndex;
+
+                    if (type != (copySrc.isScaler ? 's' : 'v'))
+                        log.Warning("'{0}' is type '{1}' however '{2}' is type '{3}'.", name, type, varsRegToCopy, copySrc.isScaler ? 's' : 'v');
+
+                    if (requestedReg + ((size + 3) / 4) > copySrc.regNo + copySrc.RegsRequired)
+                        log.Warning("The new variable '{0}' extends past the source variables last register.", name);
+                }
+
+                // make sure the reserved word is not in ISA_DATA.AsmReserveDWords, it will be added regardless
+                if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, name) >= 0)
+                {
+                    log.Error("'{0}' cannot be used as a register name because it is a reserved word.", name);
+                    continue;
+                }
+
+                // make sure the variable name is not a common alias
+                if (ISA_DATA.sRegAliases.ContainsKey(name))
+                {
+                    log.Error("'{0}' cannot be used as a variable because it is a common register alias.", name);
+                    continue;
+                }
+
+                // make sure the name is not already added to the dictionary
+                if (varsByName.ContainsKey(name))
+                {
+                    log.Error("Variable '{0}' has already been declared.", name);
+                    continue;
+                }
+
+                // lets now add it to the var dictionary
+                Variable var = new Variable()
+                {
+                    name = name,
+                    isScaler = (type == 's'),
+                    size = size,
+                    type = dataType,
+                    regNo = requestedReg, // -1 for not yet assigned
+                    variablesRegToCopy = varsRegToCopy,
+                    variablesRegToCopyIndex = varsRegToCopyIndex,
+                    isRegisterNumSpecifed = (requestedReg >= 0)
+                };
+                varsByName.Add(name, var);
+                pendingNewVarsToAddToNextStmt.Add(var);
+
+                // lets calculate usage 
+                RegUsageCalc regUsageCalc = var.isScaler ? sRegUsageCalc : vRegUsageCalc;
+                if (regUsageCalc != null)
+                    regUsageCalc.AddToCalc(var.size, stmt);
+
+            }
         }
 
         /// <summary>Frees a variable by removing it from regCalculations and marking the register as available.</summary>
@@ -127,152 +203,133 @@ namespace GcnTools
             if (varsByName.TryGetValue(name, out nr))
             {
                 nr.stmtTerminated = lastGcnStmt;
+                gcnStmts[gcnStmts.Count - 1].freeVars.Add(nr);
             }
             else
                 log.Error("Variable '{0}' cannot be freed because it does not exist.", name);
 
-            if (gcnStmts.Count == 0)
-                log.Error("There should be at least one statement before using 'free' with '{0}'", name);
-            else
-                gcnStmts[gcnStmts.Count - 1].freeVars.Add(nr);
-
             return nr;
         }
-
-        //    //Removed: we should not really "rename" but rather free and create a new with the same reg
-        ///// <summary>Renames a variable to a new name.</summary>
-        //public void Rename(string from, String to, List<GcnStmt> gcnStmts, Log log)
-        //{
-        //    Variable freed = FreeVariable(from, gcnStmts, log);
-        //    // add aaaa,bbbb,cccc
-        //    Variable freed = FreeVariable(from, gcnStmts, log);
-        //
-        //
-        //    Variable nr;
-        //    if (TryGetValue(from, out nr))
-        //    {
-        //        nr.name = to;
-        //        Remove(from);
-        //        Add(to, nr);
-        //
-        //        if (nr.IsTerminated)
-        //            log.Warning("Variable '{0}' should not be renamed because it has been freed already.", from);
-        //    }
-        //    else
-        //        log.Error("Variable '{0}' cannot be renamed because it does not exist.", from);
-        //}
 
 
         public void ProcessAutomaticFreeing(List<Stmt> gcnStmts)
         {
-            foreach (KeyValuePair<string, Variable> v in varsByName)
-            {
-                if (v.Value.stmtTerminated == null)
-                    if (v.Value.stmtsUsedIn.Count == 0)
+            //future: maybe use stmtsUsedIn for performance
+            for (int i = gcnStmts.Count - 1; i >= 0; i--)
+                foreach (VariableUsageLoc v in gcnStmts[i].vars)
+                    if (!v.variable.IsTerminated)
                     {
-                        log.Warning("Variable '{0}' was declared but never used.", v.Value.name);
-                        // varsByName.Remove(v.Value.name); //todo: add me
-                        continue;
+                        v.variable.stmtTerminated = gcnStmts[i];
+                        gcnStmts[i].freeVars.Add(v.variable);
                     }
 
+            foreach (KeyValuePair<string, Variable> v in varsByName)
+            {
                 // if 'endStmt' is null after the initial load, point it to the very end
                 if (v.Value.stmtTerminated == null)
-                    v.Value.stmtTerminated = v.Value.stmtsUsedIn[v.Value.stmtsUsedIn.Count - 1];
+                {
+                    if (v.Value.stmtsUsedIn.Count > 0) //protect 
+                        v.Value.stmtTerminated = v.Value.stmtsUsedIn[v.Value.stmtsUsedIn.Count - 1];
+                    else
+                        log.Warning("Variable '{0}' was declared but never used.", v.Value.name);
+                }
+
+                if (v.Value.stmtsUsedIn.Count == 1)
+                    if (!(v.Value.isRegisterNumSpecifed | v.Value.isRegisterFromAnotherVar)) // Pre-filled regs might be used once.
+                        log.Warning("'{0}' is only used once. Usually Variables are used 2 or times.", v.Value.name);
             }
         }
 
-        public void AssignRegNumbers( List<Stmt> gcnStmts)
+
+        public void AssignRegNumbers(List<Stmt> gcnStmts)
         {
             foreach (Stmt stmt in gcnStmts)
             {
-                // declare new vars
-                if (UsingRegPools)
-                    foreach (Variable v in stmt.newVars)
-                        if (v.regNo < 0)
-                            v.regNo = (v.isScaler ? sRegPool : vRegPool).ReserveRegs((v.size + 3) / 4);
+                // note: When using the 'free' keyword, variables are freed before the previous statement.
+                // Also, vars are freed before declarations so registers can be reused in the same instruction. 
+                log.lineNum = stmt.lineNum;
 
-
-                //todo: finish
-                ////replace the reg numbers
-                //if (stmt.vars.Count > 0)
-                //{
-                //    string newString = stmt.options.Substring(0, stmt.vars[0].startPos);
-                //    int cur = newString.Length;
-                //    for (int i = 0; i < stmt.vars.Count; i++)
-                //    {
-                //        VariableUsageLoc v = stmt.vars[i];
-                //        newString += v.RegAsString + stmt.options.Substring(v.varLength, v.startPos - cur);
-                //        cur = v.startPos + v.variable.name.Length;
-                //    }
-                //    stmt.options = newString;
-                //}
-
-                string newString = "";
-                int cur = 0;
-                foreach (VariableUsageLoc v in stmt.vars)
-                {
-                    newString += stmt.options.Substring(cur, v.startPos - cur) + v.RegAsString;
-                    cur = v.startPos + v.variable.name.Length;
-                }
-                newString += stmt.options.Substring(cur, stmt.options.Length - cur);
-                stmt.options = newString;
-
-
-                // free the vars
+                ////////////////////// free the vars //////////////////////
                 if (UsingRegPools)
                     foreach (Variable v in stmt.freeVars)
-                        (v.isScaler ? sRegPool : vRegPool).FreeReg(v.regNo);
+                        if (v.stmtTerminated != v.stmtDeclared)
+                            (v.isScaler ? sRegPool : vRegPool).FreeReg(v.regNo);
+                        else
+                            log.Warning("Variable, {0}, was declared and last used in the same statement.", v.name);
 
+                ////////////////////// declare new vars //////////////////////
+                // we first add variables that specify a register or variables
+                foreach (Variable v in stmt.newVars)
+                {
+                    if (v.isRegisterNumSpecifed && !v.isRegisterFromAnotherVar)
+                    {
+                        // Adds a GcnVar to the Vars collection and also makes sure that it is valid.
+                        // Lets add mark that register as used in the pool (if it is in the pool)
+                        RegPool regPool = v.isScaler ? sRegPool : vRegPool;
+                        if (UsingRegPools)
+                            if (regPool.ReserveSpecificRegs(v.regNo, v.RegsRequired) < 0)
+                                log.Error("The registers, {1}, used in '{0}' must was not found in the allowed register pool.", v.regNo, v.name);
+
+                        // lets calculate usage 
+                        RegUsageCalc regUsageCalc = v.isScaler ? sRegUsageCalc : vRegUsageCalc;
+                        if (regUsageCalc != null)
+                            regUsageCalc.AddToCalc(v.size, stmt);
+                    }
+
+                    // process declarations with variable as register reference 
+                    else if (v.isRegisterFromAnotherVar)
+                    {
+                        Variable lu;
+                        if (!varsByName.TryGetValue(v.variablesRegToCopy, out lu))
+                            log.Error("Variable, '{0}', could not be found.", v.variablesRegToCopy);
+                        else if (lu.stmtTerminated == null)
+                            log.Error("Variable, '{0}', can not use the same register as '{1}' because its still in use.", v.name, lu.name);
+                        else
+                        {
+                            int regNum = lu.regNo + v.variablesRegToCopyIndex;
+                            RegPool regPool = v.isScaler ? sRegPool : vRegPool;
+                            if (UsingRegPools)
+                                v.regNo = regPool.ReserveSpecificRegs(regNum, v.size);
+                        }
+                    }
+                }
+
+                foreach (Variable v in stmt.newVars)
+                {
+                    if (!v.isRegisterNumSpecifed) // exclude Registers with specified register numbers
+                        v.regNo = (v.isScaler ? sRegPool : vRegPool).ReserveRegs(v.RegsRequired, v.RegsRequired);
+                }
+
+                // Replace the variables with register numbers.
+                //if (stmt.vars.Count > 0)
+                for (int i = stmt.vars.Count - 1; i >= 0; i--)
+                {
+                    VariableUsageLoc v = stmt.vars[i];
+                    stmt.options = stmt.options.Remove(v.startPos, v.varLength).Insert(v.startPos, v.RegAsString);
+                }
             }
         }
+
+    
  
-
-        /// <summary>Adds a GcnVar to the Vars collection and also makes sure that it is valid.</summary>
-        private void ReserveSpecificRegister(string name, bool isScaler, int byteSize, Stmt stmt, int fixedRegNo = -1)
-        {
-            // Lets add mark that register as used in the pool (if it is in the pool)
-            RegPool regPool = isScaler ? sRegPool : vRegPool;
-            if (UsingRegPools)
-                if (regPool.ReserveSpecificRegs(fixedRegNo, ((byteSize + 3) / 4)) < 0)
-                    log.Error("The registers, {1}, used in '{0}' must was not found in the allowed register pool.", fixedRegNo, name);
-
-            // lets calculate usage 
-            RegUsageCalc regUsageCalc = isScaler ? sRegUsageCalc : vRegUsageCalc;
-            if (regUsageCalc != null)
-                regUsageCalc.AddToCalc(byteSize, stmt);
-        }
-
-
+        /// <summary>The number of variables.</summary>
         public int Count
         {
             get { return varsByName.Count; }
         }
 
-        ///// <summary>
-        ///// The Statement where the variable was terminated. This can be different then the last statement it was used on.
-        ///// </summary>
-        ///// <param name="stmt">The GcnStmt directly before where a free command.</param>
-        //public void AddVariableUsage(GcnStmt stmt, Log log)
-        //{
-        //    VariableUsedOnStmt
-
-        //    if (endStmt != null)
-        //        stmtsUsedIn.Add(stmt);
-        //    else
-        //        log.Error("The variable," + name + " is being used but has already been marked terminated.");
-        //}
 
         public void MarkVariableUsedInStmt(Stmt stmt, string name, int index, int startPos, int length)
         {
             Variable nr;
             if (!varsByName.TryGetValue(name, out nr))
-                log.Error("Variable '{0}' is not defined.", name);
+                log.Error("Variable, '{0}', is not defined.", name);
             else
             {
                 if (nr.stmtTerminated == null)
                     nr.stmtsUsedIn.Add(stmt);
                 else
-                    log.Error("The variable," + name + " is being used but has already been marked terminated.");
+                    log.Error("Variable, " + name + ", is being used but has already been marked terminated.");
 
                 stmt.vars.Add(new VariableUsageLoc()
                 {
@@ -298,10 +355,20 @@ namespace GcnTools
         public bool isScaler;
         /// <summary>The actual size of the register in bytes. Usually either 1, 2, 4, or 8.</summary>
         public int size;
+        /// <summary>Gets the number of DWORD regs required to fit this register.</summary>
+        public int RegsRequired { get { return ((size + 3) / 4); } }
         /// <summary>They data dataType for the register/variable. Usually either f=float, i=int, u=unsigned, or b=bool.</summary>
         public char type; // f, i, u, b
-        ///// <summary>The statement number where life begins for a variable because of a declaration.</summary>
-        //public GcnStmt startStmt;
+        /// <summary>True when, upon decoration, the exact register number is specified or it copies the register number from a variable where its reg is specified.</summary>
+        public bool isRegisterNumSpecifed;
+        /// <summary>True when the register number is specified when declared.</summary>
+        public bool isRegisterFromAnotherVar { get { return !String.IsNullOrEmpty(variablesRegToCopy); } }
+        /// <summary>The name of the variable that the register number is based off of.</summary>
+        public string variablesRegToCopy;
+        /// <summary>The indexing of the variable that the register number is based off of.</summary>
+        public int variablesRegToCopyIndex;
+        /// <summary>The statement number where the variable was declared.</summary>
+        public Stmt stmtDeclared;
         /// <summary>The Statement where the variable was terminated. This can be different then the last statement it was used on.</summary>
         public Stmt stmtTerminated;
         /// <summary>A list of statements where this variable is used.</summary>
@@ -311,15 +378,27 @@ namespace GcnTools
         {
         }
 
-        public Variable(string name, bool isScaler, int byteSize, char type, Stmt stmt, int fixedRegNo = -1)
+        public Variable(string name, bool isScaler, int byteSize, char type, int fixedRegNo = -1)
         {
             this.name = name;
             this.isScaler = isScaler;
             this.size = byteSize;
             this.type = type;
-            //this.startStmt = stmt;
             this.regNo = fixedRegNo; // -1 for not yet assigned
-            //stmtsUsedIn.Add(stmt);
+            this.isRegisterNumSpecifed = (fixedRegNo >= 0);
+
+        }
+
+        public Variable(string name, bool isScaler, int byteSize, char type, string variablesRegToCopy, int variablesRegToCopyIndex)
+        {
+            this.name = name;
+            this.isScaler = isScaler;
+            this.size = byteSize;
+            this.type = type;
+            this.regNo = -1; // -1 for not yet assigned
+            this.variablesRegToCopy = variablesRegToCopy;
+            this.variablesRegToCopyIndex = variablesRegToCopyIndex;
+            this.isRegisterNumSpecifed = false;
         }
 
         public bool IsTerminated

@@ -80,7 +80,7 @@ namespace OpenClWithGcnNS
             if (sw != null) log.AppendFormat("ReplaceAsm4GCNBlocksWithDummyKernel ms: {0}", sw.ElapsedMilliseconds);
 
             /////////// Step: Create Program From OpenCl source with dummy kernels
-            success = CreateBinaryFromOpenClSource(sourceWithDummyKernels);
+            success = CreateBinaryFromOpenClSource(sourceWithDummyKernels, log);
             if (sw != null) log.AppendFormat("Check for any compilation errors ms: {0}", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString() + "ERROR: CreateBinaryFromOpenClSource() failed"; return false; }
 
@@ -134,12 +134,20 @@ namespace OpenClWithGcnNS
 
 
         /// <summary>Create Program From OpenCl source and dummy kernels</summary>
-        private bool CreateBinaryFromOpenClSource(string sourceWithDummys)
+        private bool CreateBinaryFromOpenClSource(string sourceWithDummys, StringBuilder log)
         {
             env.program = env.context.CreateProgramWithSource(sourceWithDummys);
             if (sw != null) Console.WriteLine("CreateProgramWithSource ms: {0}", sw.ElapsedMilliseconds);
-            
-            env.program.Build(); 
+
+            try
+            {
+                env.program.Build();
+            }
+            catch (Exception x)
+            {
+                log.AppendFormat("OpenCL Build error: {0}", x.Message);
+            }
+
             if (sw != null) Console.WriteLine("BuildProgram ms: {0}", sw.ElapsedMilliseconds);
             
             BuildStatus bs = env.program.GetBuildStatus(env.program.Devices[0]);
@@ -222,7 +230,7 @@ namespace OpenClWithGcnNS
                     if (name == "") 
                         name = "auto_gen_var_name_" + c;
                     else
-                        log.AppendLine("WARNING: Parameter names are not used in __asm4GCN. Example Use: __asm4GCN myFunc(uint, uint) {...}");
+                        log.AppendLine("WARN: Parameter names are not used in __asm4GCN. Example Use: __asm4GCN myFunc(uint, uint) {...}");
 
                     type = new string(type.ToCharArray().Where(w => !Char.IsWhiteSpace(w)).ToArray()); // remove whitespace
                     
@@ -402,11 +410,11 @@ namespace OpenClWithGcnNS
                     else if ((from t in testedOK where t.Major == driver.Major && t.Minor == driver.Minor select t).Any())
                         msg.AppendFormat("INFO: AMD driver version, {0}, is near a known working version{1}\r\n", driverVer, recommend);
                     else if (driver < testedOK[0])
-                        msg.AppendFormat("WARNING: AMD driver version, {0}, might be too low (warning below {1}){2}\r\n", driverVer, testedOK[0], recommend);
+                        msg.AppendFormat("WARN: AMD driver version, {0}, might be too low (warning below {1}){2}\r\n", driverVer, testedOK[0], recommend);
                     else if (driver > testedOK.Last())
-                        msg.AppendFormat("WARNING: AMD driver version, {0}, might be too new (warning above {1}){2}\r\n", driverVer, testedOK.Last(), recommend);
+                        msg.AppendFormat("WARN: AMD driver version, {0}, might be too new (warning above {1}){2}\r\n", driverVer, testedOK.Last(), recommend);
                     else
-                        msg.AppendFormat("WARNING: AMD driver version, {0}, has not been tested {2}\r\n", driverVer, testedOK.Last(), recommend);
+                        msg.AppendFormat("WARN: AMD driver version, {0}, has not been tested {2}\r\n", driverVer, testedOK.Last(), recommend);
 
                     //////////////////// Lets check the GPU dataType using the Video card name /////////////////////////
                     if (Regex.Match(desc,
@@ -428,7 +436,7 @@ namespace OpenClWithGcnNS
                     }
                     else
                     {
-                        msg.AppendLine("WARNING: AMD GPU Found: (unknown if GPU supports GCN) " + desc);
+                        msg.AppendLine("WARN: AMD GPU Found: (unknown if GPU supports GCN) " + desc);
                     }
 
                 }
