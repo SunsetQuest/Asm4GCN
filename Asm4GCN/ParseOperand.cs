@@ -36,8 +36,8 @@ namespace GcnTools
         {
             Match m = Regex.Match(val, @"^(?i:" +
                 @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + // hex values 0x12AB
-                @"(?:0(?<1>o)(?<2>[0-9a-f]+))|" + // oct values 0o7564
-                @"(?:0(?<1>b)(?<2>[0-9a-f]+))|" + // bin values 0b1101010
+                @"(?:0(?<1>o)(?<2>[0-7]+))|" + // oct values 0o7564
+                @"(?:0(?<1>b)(?<2>[01]+))|" + // bin values 0b1101010
                 @"(?<2>(?<1>\d)\d*(?:E[+-]?\d+)?)" + //simple number with optional exponent(nnnExx, nnnE+xx, and nnnE-xx)
                 //@"|(?:(?<1>@)(?<2>[a-z_][0-9a-z_]+))" + //labels  @myLabel  (removed: labels processed before parsing)
                 @")$");
@@ -74,8 +74,8 @@ namespace GcnTools
         {
             Match m = Regex.Match(val, @"^(?i:" +
                 @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + // hex values 0x12AB
-                @"(?:0(?<1>o)(?<2>[0-9a-f]+))|" + // oct values 0o7564
-                @"(?:0(?<1>b)(?<2>[0-9a-f]+))|" + // bin values 0b1101010
+                @"(?:0(?<1>o)(?<2>[0-7]+))|" + // oct values 0o7564
+                @"(?:0(?<1>b)(?<2>[01]+))|" + // bin values 0b1101010
                 @"(?<2>-?(?<1>\d)\d*(?:E[+-]?\d+)?)" +//simple number with optional exponent(nnnExx, nnnE+xx, and nnnE-xx)
                 //@"|(?:(?<1>@)(?<2>[a-z_][0-9a-z_]+))" + //labels  @myLabel (removed: labels processed before parsing)
                 @")$");
@@ -119,7 +119,7 @@ namespace GcnTools
             {
                 if (!allowedTypesFlag.HasFlag(opInfo.flags))
                     log.Error("The dataType '{0}' is not allowed for param #{1}.", paramNo, opInfo.flags, paramNo);
-                return opInfo;
+               return opInfo;
             }
 
             Match m = Regex.Match(val, @"^(?i:" +
@@ -128,8 +128,8 @@ namespace GcnTools
                 @"(?:(?<1>v)(?<2>\d+))|" +  //vector register vnnn
                 @"(?:(?<1>v)\[(?<2>\d+):\d+\])|" + //vector register v[nnn:nnn]
                 @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + //hex values 0x12AB
-                @"(?:0(?<1>o)(?<2>[0-9a-f]+))|" + //oct values 0o7564
-                @"(?:0(?<1>b)(?<2>[0-9a-f]+))|" + //bin values 0b1101010
+                @"(?:0(?<1>o)(?<2>[0-7]+))|" + //oct values 0o7564
+                @"(?:0(?<1>b)(?<2>[01]+))|" + //bin values 0b1101010
                 @"(?:(?<2>-?\d*(?<1>\.)\d*)(?:E[+-]?\d+)?)|" + //float values with optional exponent -2.1E45
                 //@"(?:(?<1>)(?<2>[+-]?\d+))|"+ //simple number 
                 @"(?<2>-?(?<1>\d)\d*(?:E[+-]?\d+)?)" +//simple number with optional exponent(nnnExx, nnnE+xx, and nnnE-xx)

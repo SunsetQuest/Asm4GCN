@@ -113,13 +113,13 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\NOpenCL\NOpenCL\NOpenCL.csproj">
-      <Project>{c94f61dd-9361-4b1f-b1a8-dad72bd6fd51}</Project>
-      <Name>NOpenCL</Name>
-    </ProjectReference>
     <ProjectReference Include="..\Asm4GCN\Asm4GCN.csproj">
       <Project>{c72c7a09-d424-489a-a5b3-bad01013fb67}</Project>
       <Name>Asm4GCN</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\NOpenCL\NOpenCL\NOpenCL.csproj">
+      <Project>{c94f61dd-9361-4b1f-b1a8-dad72bd6fd51}</Project>
+      <Name>NOpenCL</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

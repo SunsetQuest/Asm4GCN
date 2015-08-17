@@ -70,7 +70,6 @@
     <Compile Include="Variables.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Changes.txt" />
     <Content Include="TestInput.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

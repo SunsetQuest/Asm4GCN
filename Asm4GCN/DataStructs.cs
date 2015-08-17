@@ -47,5 +47,4 @@ namespace GcnTools
         /// <summary>A list of variables that are freed after to this statement.</summary>
         public List<Variable> freeVars = new List<Variable>();
     }
-    
 }

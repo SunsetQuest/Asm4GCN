@@ -96,6 +96,7 @@ namespace OpenClWithGcnNS
         /// <summary>This is the output log. It contains information, warnings, and errors.</summary>
         public string compileLog;
 
+        /// <summary>Count the number of lines in the header so the error-line-# reports correctly.</summary>
         public int newlineCtInHeader;
     }
 }

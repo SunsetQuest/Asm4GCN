@@ -108,19 +108,20 @@ namespace GcnTools
                 return op_code;
             }
             if (args.Length < 4)
-               log.Error("number of passed operands is too low");
+            {
+                log.Error("number of passed operands is too low");
+                return op_code;
+            }
 
-	        // Setup arguments
-	        string vdst_str	= args[0];
+            // Setup arguments
+            
+            string vdst_str	= args[0];
 	        string addr_str	= args[1];
 	        string data0_str= args[2];
 	        string data1_str= args[3];
 	       
 
-            uint vdst_val = ParseOperand.parseOnlyVGPR(vdst_str, 1, log);
-            uint addr_op = ParseOperand.parseOnlyVGPR(addr_str, 2, log);
-            uint data0_op = ParseOperand.parseOnlyVGPR(data0_str, 3, log);
-            uint data1_op = ParseOperand.parseOnlyVGPR(data1_str, 4, log);
+
 
 	        // Parse optional parameters
 	        for (int i = 4; i < args.Length; i++)
@@ -139,6 +140,11 @@ namespace GcnTools
                     op_code.code |= val << (m.Groups[1].Value == "0" ? 0 : 8);
 		        }
 	        }
+
+            uint vdst_val = ParseOperand.parseOnlyVGPR(vdst_str, 1, log);
+            uint addr_op = ParseOperand.parseOnlyVGPR(addr_str, 2, log);
+            uint data0_op = ParseOperand.parseOnlyVGPR(data0_str, 3, log);
+            uint data1_op = ParseOperand.parseOnlyVGPR(data1_str, 4, log);
 
             op_code.literal = addr_op | data0_op << 8 | data1_op << 16 | vdst_val << 24;
 
@@ -193,19 +199,22 @@ namespace GcnTools
             // reserved	48	54		    7	Reserved
             // TFE	    55	55	enum	1	Texture Fail Enable. For partially resident textures.
             // VDST	    56	63	enum	8	Destination VGPR.
-            
-            
+
+            OpCode op_code = new OpCode { code = instr.opCode };
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
             if (args.Length < 3)
+            {
                 log.Error("number of passed operands is too low");
+                return op_code;
+            }
 
             // Setup arguments
             string vdst_str = args[0];
             string addr_str = args[1];
             string data_str = args[2];
 
-            OpCode op_code = new OpCode { code = instr.opCode };
 
             uint vdst_val = ParseOperand.parseOnlyVGPR(vdst_str, 1, log);
             uint addr_op = ParseOperand.parseOnlyVGPR(addr_str, 2, log);
@@ -254,12 +263,14 @@ namespace GcnTools
             // SSAMP	53	57	enum	5	Scalar GPR that specifies the sampler constant, in units of four SGPRs.
             // reserved	58	63		    6	Reserved.
 
-            
+            OpCode op_code = new OpCode { code = instr.opCode};
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
             if (args.Length < 4)
-               log.Error("number of passed operands is too low");
-
-            OpCode op_code = new OpCode { code = instr.opCode};
+            {
+                log.Error("number of passed operands is too low");
+                return op_code;
+            }
 
             uint vdata_op = ParseOperand.parseOnlyVGPR(args[0], 1, log);
             uint vaddr_op = ParseOperand.parseOnlyVGPR(args[1], 2, log);
@@ -508,70 +519,73 @@ namespace GcnTools
             // OP	    8	15	enum	8	0 – 2 reserved.
             // SDST	    16	22	enum	7	Scalar destination for instruction. Same codes as for SSRC0, above, except that this can use only codes 0 to 127.
             // ENCODING	23	31	enum	9	Must be 1 0 1 1 1 1 1 0 1.
-            
-            string[] args = Regex.Split(options, @"\s*[,\s]\s*");
+            string[] args = Regex.Split(options, @"\s*,\s*");
+
+            int argCt = args.Length;
+            if (argCt == 1)
+                if (args[0] == "")
+                    argCt = 0;
 
             OpCode op_code = new OpCode { code = instr.opCode };
 
-            if (instr.name == "s_setpc_b64")
+            switch (instr.name)
             {
-                if (args.Length != 1 || args[0] == "")
-                    log.Error("s_setpc_b64 should have a jump destination only.(S reg or constant");
+                case "s_setpc_b64":
+                    if (argCt != 1)
+                        {
+                            log.Error("s_setpc_b64 should have a jump destination only.(S reg or constant");
+                            return op_code;
+                        }
 
-                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
-                return new OpCode { code = instr.opCode | ssrc };
+                    uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                    return new OpCode { code = instr.opCode | ssrc };
+                case "s_getpc_b64":
+                    if (argCt != 1)
+                        {
+                            log.Error("s_getpc_b64 takes a 64-bit S reg only.");
+                            return op_code;
+                        }
+                    uint sdst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
+                    return new OpCode { code = instr.opCode | (sdst << 16) };
+                case "s_rfe_b64":
+                    if (argCt == 0)
+                        log.Error("s_rfe_b64 does not take any params.");
+                    return op_code;
+                case "s_cbranch_join":
+                    if (argCt != 1)
+                    {
+                        log.Error("s_cbranch_join only takes one argument.(the saved CSP value)");
+                        return op_code;
+                    }
+                    uint ssrc2 = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                    return new OpCode { code = instr.opCode | ssrc2 };
+                case "s_set_gpr_idx_idx":
+                    if (argCt != 1)
+                    {
+                        log.Error("s_set_gpr_idx_idx only takes one argument.(M0[7:0] = S0.U[7:0])");
+                        return op_code;
+                    }
+                    uint ssrc3 = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
+                    return new OpCode { code = instr.opCode | ssrc3 };
+                default:
+                    if (argCt != 2)
+                    {
+                        log.Error("SOP1 instructions should have 2 arguments.");
+                        return op_code;
+                    }
+
+                    // SDST (arg 1) - Destination for instruction.
+                    uint sDst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
+
+                    // SSRC0 (arg 2)
+                    OpInfo ssrc0 = ParseOperand.parseOperand(args[1], OpType.SCALAR_SRC, 2, log);
+                    if (ssrc0.flags.HasFlag(OpType.LITERAL))
+                        op_code.literal = ssrc0.value;
+
+                    op_code.code |= (sDst << 16) | ssrc0.reg;
+
+                    return op_code;
             }
-
-            if (instr.name == "s_getpc_b64")
-            {
-                if (args.Length != 1 || args[0] == "")
-                    log.Error("s_getpc_b64 takes a 64-bit S reg only.");
-
-                uint sdst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
-                return new OpCode { code = instr.opCode | (sdst << 16) };
-            }
-
-            if (instr.name == "s_rfe_b64")
-            {
-                if (args[0] != "")
-                    log.Error("s_rfe_b64 does not take any params.");
-                return op_code;
-            }
-
-            if (instr.name == "s_cbranch_join")
-            {
-                if (args.Length != 1 || args[0] == "")
-                    log.Error("s_cbranch_join only takes one argument.(the saved CSP value)");
-                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
-                return new OpCode { code = instr.opCode | ssrc };
-            }
-
-            if (instr.name == "s_set_gpr_idx_idx")
-            {
-                if (args.Length != 1 || args[0] == "")
-                    log.Error("s_set_gpr_idx_idx only takes one argument.(M0[7:0] = S0.U[7:0])");
-                uint ssrc = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log).value;
-                return new OpCode { code = instr.opCode | ssrc };
-            }
-
-            if (args.Length != 2)
-            {
-                log.Error("SOP1 instructions should have 2 arguments.");
-                return op_code;
-            }
-
-
-            // SDST (arg 1) - Destination for instruction.
-            uint sDst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
-
-            // SSRC0 (arg 2)
-            OpInfo ssrc0 = ParseOperand.parseOperand(args[1], OpType.SCALAR_SRC, 2, log);
-            if (ssrc0.flags.HasFlag(OpType.LITERAL))
-                op_code.literal = ssrc0.value;
-
-            op_code.code |= (sDst << 16) | ssrc0.reg;
-
-            return op_code;
         }
 
         /// <summary>
@@ -589,10 +603,13 @@ namespace GcnTools
             
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
-            if (args.Length != 3)
-               log.Error("SOP1 instructions should have 2 arguments.");
-
             OpCode op_code = new OpCode { code = instr.opCode };
+
+            if (args.Length != 3)
+            {
+                log.Error("SOP2 instructions should have 3 arguments.");
+                return op_code;
+            }
 
             // SDST (argument 1)
             uint sdst_val = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).value;
@@ -629,10 +646,13 @@ namespace GcnTools
              
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
-            if (args.Length != 2)
-               log.Error("SOPC instructions should have 2 arguments.");
-
             OpCode op_code = new OpCode { code = instr.opCode };
+
+            if (args.Length != 2)
+            {
+                log.Error("SOPC instructions should have 2 arguments.");
+                return op_code;
+            }
 
             // SSRC0 (argument 1)
             OpInfo ssrc0 = ParseOperand.parseOperand(args[0], OpType.SCALAR_SRC, 1, log);
@@ -663,15 +683,20 @@ namespace GcnTools
             // SDST	    16	22	enum	7	Scalar destination for instruction. Same codes as for SIMM16, above, except that this can use only codes 0 to 127. 16-bit integer input for opcode. Signedness is determined by opcode. 
             // OP	    23	27	enum	5	Opcode.
             // ENCODING	28	31	enum	4	Must be 1 0 1 1.
-            
+            OpCode op_code = new OpCode { code = instr.opCode };
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
             if (args.Length < instr.opCtMin)
-               log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
-            if (args.Length > instr.opCtMax)
-               log.Error("{0} should have no more then {1} argument(s).", instr.name, instr.opCtMax);
-
-            OpCode op_code = new OpCode { code = instr.opCode };
+            {
+                log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
+                return op_code;
+            }
+            else if (args.Length > instr.opCtMax)
+            {
+                log.Error("{0} should have no more then {1} argument(s).", instr.name, instr.opCtMax);
+                return op_code;
+            }
 
             uint immd = ParseOperand.parseSignedNumber(args[0], 16, 2, log);
 
@@ -688,8 +713,6 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeSOPP(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-
             if (instr.name == "s_waitcnt")
             {    
                 uint VMCt= 0x0F/*0-15*/, LGKMCt= 0x0F/*0-15*/, EXPCt= 0x07/*0-7*/;
@@ -733,14 +756,20 @@ namespace GcnTools
             if (options == "")
             {
                 if (instr.opCtMin > 0)
+                {
                     log.Error("{0} expected argument(s).", instr.name);
+                    return (new OpCode { code = instr.opCode });
+                }
             }
             else
             {
                 string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
                 if (args.Length != instr.opCtMax)
+                {
                     log.Error("{0} should have {1} argument(s).", instr.name, instr.opCtMax, instr.opCtMax);
+                    return (new OpCode { code = instr.opCode});
+                }
 
                 immd = ParseOperand.parseSignedNumber(args[0], 16, 1, log);
             }
@@ -870,16 +899,20 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeVOP1(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-            
+            OpCode op_code = new OpCode { code = instr.opCode };
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
             if (args.Length < instr.opCtMin)
-               log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
+            {
+                log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
+                return op_code;
+            }
             if (args.Length > instr.opCtMax)
-               log.Error("{0} should have no more then {1} argument(s).", instr.name, instr.opCtMax);
-
-            OpCode op_code = new OpCode { code = instr.opCode };
+            {
+                log.Error("{0} should have no more then {1} argument(s).", instr.name, instr.opCtMax);
+                return op_code;
+            }
 
             uint vdst;
             OpInfo vsrc0;
@@ -898,7 +931,6 @@ namespace GcnTools
 
             op_code.code |= (vdst << 17) | vsrc0.reg;
 
-
             return op_code;
         }
 
@@ -908,13 +940,18 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeVOP2(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-            
+            OpCode op_code = new OpCode { code = instr.opCode };
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
             int argCt = args.Length;
 
+            if (argCt < 3)
+            {
+                log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
+                return op_code;
+            }
+
             // handle "vcc" destination in VOP2.  example: v_add_a32 v0, vcc, v1, v2
-            
             if (instr.OpNum.IsBetween<uint>(36, 43))
                 if (args[1] == "vcc")
                 {
@@ -925,29 +962,25 @@ namespace GcnTools
                 else
                     log.Warning("{0} should specify VCC as output param for clarity.", instr.name);
 
-
-
-            if (argCt < instr.opCtMin)
-                log.Error("{0} should have at least {1} argument(s).", instr.name, instr.opCtMin);
             if (argCt > instr.opCtMax)
+            {
                 log.Error("{0} should have no more then {1} argument(s).", instr.name, instr.opCtMax);
+                return op_code;
+            }
 
-
-            OpCode op_code = new OpCode { code = instr.opCode};
-
-            uint vdst, vsrc1; 
+            uint vdst, vsrc1;
             OpInfo vsrc0;
             if (instr.name == "v_readlane_b32")
             {
                 vdst = ParseOperand.parseOnlySGPR(args[0], 1, log, OpType.SCALAR_DST);
-                vsrc0 = ParseOperand.parseOperand(args[1], OpType.VGPR | OpType.LDS_DIRECT, 2, log);
-                vsrc1 = ParseOperand.parseOperand(args[2], OpType.SGPR | OpType.LDS_DIRECT, 3, log).reg;
+                vsrc0 = ParseOperand.parseOperand(args[1], OpType.VGPR | OpType.LDS_DIRECT | OpType.M0, 2, log);
+                vsrc1 = ParseOperand.parseOperand(args[2], OpType.SGPR | OpType.LDS_DIRECT | OpType.M0 | OpType.INLINE, 3, log).reg;
             }
             else if (instr.name == "v_writelane_b32")
             {
                 vdst = ParseOperand.parseOnlyVGPR(args[0], 1, log);
                 vsrc0 = ParseOperand.parseOperand(args[1], OpType.SGPR | OpType.M0 | OpType.EXEC | OpType.CONST, 2, log);
-                vsrc1 = ParseOperand.parseOperand(args[2], OpType.SGPR | OpType.M0, 3, log).reg;
+                vsrc1 = ParseOperand.parseOperand(args[2], OpType.SGPR | OpType.M0 | OpType.INLINE, 3, log).reg;
             }
             else
             {
@@ -969,7 +1002,7 @@ namespace GcnTools
             if (m.Groups["omod"].Success)
             {
                 if (!m.Groups["omod"].Value.Contains("."))
-                    log.Warning("omod or mul arguements should use use a period(.) in the number to show it is float");
+                    log.Warning("omod or mul arguments should use a period(.) in the number to show it is float");
 
                 if (Regex.Match(m.Groups["omod"].Value, "^4.?0*$").Success)
                     val |= 1 << 58;
@@ -1006,8 +1039,6 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeVOP3a1(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-            
             OpCode op_code = new OpCode { code = instr.opCode };
 
             Match m = Regex.Match(options, @"
@@ -1118,11 +1149,17 @@ namespace GcnTools
 
             uint vdst;
             OpInfo vsrc0, vsrc1;
-            if (instr.name == "V_READLANE_B32")
+            if (instr.name == "v_readlane_b32")
             {
-                vdst = ParseOperand.parseOnlySGPR(m.Groups["P0"].Value, 1, log);
-                vsrc0 = ParseOperand.parseOperand(m.Groups["P1"].Value, OpType.VGPR | OpType.LDS_DIRECT, 2, log);
-                vsrc1 = ParseOperand.parseOperand(m.Groups["P2"].Value, OpType.SGPR | OpType.LDS_DIRECT, 3, log);
+                vdst = ParseOperand.parseOnlySGPR(m.Groups["P0"].Value, 1, log, OpType.SCALAR_DST);
+                vsrc0 = ParseOperand.parseOperand(m.Groups["P1"].Value, OpType.VGPR | OpType.LDS_DIRECT | OpType.M0, 2, log);
+                vsrc1 = ParseOperand.parseOperand(m.Groups["P2"].Value, OpType.SGPR | OpType.LDS_DIRECT | OpType.M0 | OpType.INLINE, 3, log);
+            }
+            else if (instr.name == "v_writelane_b32")
+            {
+                vdst = ParseOperand.parseOnlyVGPR(m.Groups["P0"].Value, 1, log);
+                vsrc0 = ParseOperand.parseOperand(m.Groups["P1"].Value, OpType.SGPR | OpType.M0 | OpType.EXEC | OpType.CONST, 2, log);
+                vsrc1 = ParseOperand.parseOperand(m.Groups["P2"].Value, OpType.SGPR | OpType.M0 | OpType.INLINE, 3, log);
             }
             else
             {
@@ -1192,8 +1229,6 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeVOP3b2(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-            
             OpCode op_code = new OpCode { code = instr.opCode };
 
             Match m = Regex.Match(options, @"
@@ -1255,7 +1290,7 @@ namespace GcnTools
             (?:(?<N3>neg)\((?<A3>abs)\((?<P3>.+?)\)\)|(?<N3>neg)\((?<P3>.+?)\)|(?<A3>abs)\((?<P3>.*?)\)|(?<P3>.+?)) # Src2
             (?:\s*[,\s]\s* (?:
                 (?:omod|mul)[:=\(](?<omod>[a-z0-9\.]+)\)?   # omod options like omod=2.0 omod:0.5 mul(2.0)
-                |(?<Unknown>[^\s]+)      # catch anything unknown options to throw error
+                |(?<Unknown>[^\s]+)      # catch any unknown options to throw error
                 ))+
             ", RegexOptions.IgnorePatternWhitespace);
 
@@ -1335,7 +1370,7 @@ namespace GcnTools
 
             op_code.code |= (sdst << 8);
             op_code.literal = vsrc0.reg | vsrc1.reg << 9 | ParseOperand.setBitOnFound(m, "N1", 60, "N2", 61);
-
+            
             return op_code;
         }
         
@@ -1345,14 +1380,16 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeVOPC(InstInfo instr, string options, Log log)
         {
-            // Field   beg end  dataType  size  notes  (from AMD ISA Manual)
-	        
+            OpCode op_code = new OpCode { code = instr.opCode};
+
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 
             if (args.Length != 2)
-               log.Error("VOPC instructions should have two arguments.");
+            {
+                log.Error("VOPC instructions should have two arguments.");
+                return op_code;
+            }
 
-            OpCode op_code = new OpCode { code = instr.opCode};
 
             OpInfo vsrc0 = ParseOperand.parseOperand(args[0], OpType.ALL, 1, log);
             if (vsrc0.flags.HasFlag(OpType.LITERAL))

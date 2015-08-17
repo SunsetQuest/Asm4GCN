@@ -298,7 +298,7 @@ namespace Asm4GcnGUI
         Style S_OppStyle = new TextStyle(Brushes.Blue, null, FontStyle.Italic);
         Style V_OppStyle = new TextStyle(Brushes.IndianRed, null, FontStyle.Italic);
         Style constantStyle = new TextStyle(Brushes.DarkGreen, null, FontStyle.Bold);
-        Style TTTStyle = new TextStyle(Brushes.White, Brushes.Black, FontStyle.Italic);
+        Style TTTStyle = new TextStyle(Brushes.Purple, null, FontStyle.Italic | FontStyle.Bold);
         Style CommandsStyle = new TextStyle(Brushes.DarkGoldenrod, null, FontStyle.Italic);
         Style RegistersStyle = new TextStyle(Brushes.DarkCyan, null, FontStyle.Bold);
         Style LabelStyle = new TextStyle(Brushes.DarkOrange, null, FontStyle.Underline | FontStyle.Bold);
@@ -310,7 +310,7 @@ namespace Asm4GcnGUI
 
             // Text Template Transformations
             range.ClearStyle(TTTStyle);
-            range.SetStyle(S_OppStyle, @"\[\[.*?\]\]");
+            range.SetStyle(TTTStyle, @"\[\[.*?\]\]");
 
             // Comments
             range.ClearStyle(GreenStyle);

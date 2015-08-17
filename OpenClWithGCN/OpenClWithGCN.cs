@@ -64,7 +64,6 @@ namespace OpenClWithGcnNS
             env.asmBlocks = ExtractAsm4GCNBlocks(source, log, out success);
             if (sw != null) log.AppendFormat("CompileGcnBlocks ms: {0}", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString(); return false; }
-            if (env.asmBlocks.Count == 0) { env.lastMessage = "(no GCN assembly found)\r\n"; return false; }
 
             /////////// Step: compile the pulled Asm4GCN blocks to binary and note the byteSize, 
             ///////////        sReg and vReg counts. Blocks are compiled with temporary registers.
@@ -206,8 +205,7 @@ namespace OpenClWithGcnNS
 
             if (matches.Count == 0)
             {
-                log.AppendLine("ERROR: Unable to understand header or footer. Example Use: __asm4GCN myFunc(uint, uint) {...}");
-                success = false;
+                log.AppendLine("Info: There were no __asm4GCN blocks found.");
                 return asmBlocks;
             }
 
