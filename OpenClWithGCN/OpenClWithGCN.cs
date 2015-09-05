@@ -124,7 +124,7 @@ namespace OpenClWithGcnNS
                 int start = ByteSearch(dummyBinary, new byte[] { 0xff, 0x02, 0x16, 0x7e, 0x00, 0xc0, 0x9a, 0x78, 0xff, 0x02 }, new byte[] { 0xFF, 0xFF, 0xFB, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0) - 0;
 
                 // newer 14.501.1003.0 (11/20/2014): 02FF789AC0007E1602FF (rev: ff 02 16 7e 00 c0 9a 78 ff 02 18 7e 01 c0)
-		        // older 13.251.9001.0 (4 /23/2014): 02FF789AC0007E1202FF (02 FF 78 9A C0 00 7E 12 02 ff)
+                // older 13.251.9001.0 (4 /23/2014): 02FF789AC0007E1202FF (02 FF 78 9A C0 00 7E 12 02 ff)
 
                 if (start > 0)
                     Buffer.BlockCopy(asmBlock.bin, 0, dummyBinary, start, asmBlock.bin.Length);
@@ -138,12 +138,17 @@ namespace OpenClWithGcnNS
         private string  last_sourceWithDummy = "";
         /// <summary>This the success result of the cached copy of the last dummy source code.</summary>
         private bool    last_success = false;
+        /// <summary>This the success result of the cached copy of the last dummy source code.</summary>
+        private Program last_program;
         /// <summary>Create Program From OpenCl source and dummy kernels</summary>
         private bool CreateBinaryFromOpenClSource(string sourceWithDummys, StringBuilder log)
         {
             // already cached? If so, lets use the last program we built
             if (last_sourceWithDummy == sourceWithDummys)
+            {
+                env.program = last_program;
                 return last_success;
+            }
 
             env.program = env.context.CreateProgramWithSource(sourceWithDummys);
             if (sw != null) Console.WriteLine("CreateProgramWithSource ms: {0}", sw.ElapsedMilliseconds);
@@ -164,6 +169,7 @@ namespace OpenClWithGcnNS
                 Console.WriteLine("\nError in GetProgramBuildInfo: " + env.program.GetBuildLog(env.program.Devices[0]));
 
             last_sourceWithDummy = sourceWithDummys;
+            last_program = env.program;
             last_success = (bs == BuildStatus.Success);
 
             return (bs == BuildStatus.Success);
