@@ -273,7 +273,7 @@
         AAEAAAD/////AQAAAAAAAAAMAgAAAFdTeXN0ZW0uV2luZG93cy5Gb3JtcywgVmVyc2lvbj00LjAuMC4w
         LCBDdWx0dXJlPW5ldXRyYWwsIFB1YmxpY0tleVRva2VuPWI3N2E1YzU2MTkzNGUwODkFAQAAACZTeXN0
         ZW0uV2luZG93cy5Gb3Jtcy5JbWFnZUxpc3RTdHJlYW1lcgEAAAAERGF0YQcCAgAAAAkDAAAADwMAAAAe
-        CwAAAk1TRnQBSQFMAgEBBQEAASgBAgEoAQIBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
+        CwAAAk1TRnQBSQFMAgEBBQEAATABAgEwAQIBEAEAARABAAT/ARkBAAj/AUIBTQE2BwABNgMAASgDAAFA
         AwABIAMAAQEBAAEYBgABGBIAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/kAAw/5AAMP+QADD/
         kAAw/5AAMP+QADD/kAAw/5AAMP+QAA//AUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEiAUwBsQEi
         cv8BkAHbAf8CAAE6EgABOgIAAf8B2wGQGP8BTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGxASIBTAGx
@@ -456,28 +456,28 @@ static class Example1 // This examples doubles one array into another.
     <value>__asm4GCN myAsmFunc (float*,float*,float*)
 {
   // ======== Pre-Loaded Registers =========
-  // s[2:3] - PTR_UAV_TABLE
+  // s[2:3]       - UAV table Pointer
   // s[2:3] +0x60 - base_resource_const1(#T)
   // s[2:3] +0x68 - base_resource_const2(#T)
-  // s[4:7] - IMM_CONST_BUFFER0
+  // s[4:7]       - Imm Const Buffer 0
   // s[4:7] +0x00 - Grid Size
   // s[4:7] +0x04 - Local Size
   // s[4:7] +0x18 - baseGlobalId
-  // s[8:11] -IMM_CONST_BUFFER1
+  // s[8:11]      - Imm Const Buffer 1
   // s[8:11]+0x00 - param1 offset
   // s[8:11]+0x04 - param2 offset 
   // s[8:11]+0x08 - param3 offset
-  // s1     - threadgroupId
-  // s12    - groupId
-  // v0     - laneId
+  // s12          - Group ID
+  // v0           - Local ID
   
   // Use a #define to shorten tbuffer_load instruction
   #define _F32_ 0 offen format:[BUF_DATA_FORMAT_32,BUF_NUM_FORMAT_FLOAT]
   
   // Variable decelerations with specific registers (pre-loaded regs)
-  s8u  resConsts s[2:3]   // base resource constants
-  s16u uavBuff   s[4:7], paramsOffset s[8:11], groupId s12
-  v4b  laneId    v0       // v0 is pre-loaded with lane id
+  s8u resConsts s[2:3]   // base resource constants
+  s16u uavBuff   s[4:7], paramsOffset s[8:11]
+  s4u groupId s12
+  v4b localId    v0       // v0 is pre-loaded with lane id
   
   // Setup Resource Constant
   s_load_dwordx4 s16u resConst1, resConsts, 0x68             
@@ -488,7 +488,7 @@ static class Example1 // This examples doubles one array into another.
   s_waitcnt     lgkmcnt(0)                      
   v_mov_b32     v4u vLocalSize, localSize                  
   v_mul_i32_i24     vLocalSize, groupId, vLocalSize           
-  v_add_i32     v4u localSizeIdx, vcc, laneId, vLocalSize 
+  v_add_i32     v4u localSizeIdx, vcc, localId, vLocalSize 
   v_add_i32     v4u vGlobalID, vcc, baseGlobalId, localSizeIdx
   v_lshlrev_b32 v4u vGlobalOffset, 2, vGlobalID
 
@@ -519,18 +519,10 @@ static class Example1 // This examples doubles one array into another.
   free param2Offset  // var is freed and register returned to pool.
   tbuffer_store_format_x sum, dstOffset,resConst1,_F32_ 
   
-  _ShowVar_(vGlobalOffset)
+  _ShowVar_(localId)
   
   // Exit the kernel
   s_endpgm                                            
-};
-  
-  // This is not used here but is what generates the above assembly.
-  // __kernel and __asm4GCN blocks can be used in the same clProgram
-__kernel void myOpenClFunc(__global float* input, __global float* output) 
-{ 
-      size_t i = get_global_id(0);
-      output[i] = input[i] + input[i];
 };</value>
   </data>
   <metadata name="saveFileDialog1.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">

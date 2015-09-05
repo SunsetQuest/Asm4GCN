@@ -56,6 +56,7 @@
     </Otherwise>
   </Choose>
   <ItemGroup>
+    <Compile Include="TestCachedPrograms.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="FastWavefrontReductions.cs" />
     <Compile Include="DoubleValueUsingOpenCL.cs" />

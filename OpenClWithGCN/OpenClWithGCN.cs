@@ -51,18 +51,21 @@ namespace OpenClWithGcnNS
         public bool GcnCompile(string source)
         {
             StringBuilder log = new StringBuilder();
+            if (sw != null) sw.Restart();
 
             /////////// Step: Lets first do any text templates ///////////
-            if (!T44.Expand(source, out source))
-            {
-                env.lastMessage = "ERROR: There is an error in the text templates [[...]]\r\n";
-                return false;
-            }
+            if (source.Contains("[["))
+                if (!T44.Expand(source, out source))
+                {
+                    env.lastMessage = "ERROR: There is an error in the text templates [[...]]\r\n";
+                    return false;
+                }
+            if (sw != null) log.AppendFormat("T44.Expand {0}ms ->", sw.ElapsedMilliseconds);
 
             /////////// Step: pull out the Asm4GCN Blocks into asmBlocks ///////////
             bool success = false;
-            env.asmBlocks = ExtractAsm4GCNBlocks(source, log, out success);
-            if (sw != null) log.AppendFormat("CompileGcnBlocks ms: {0}", sw.ElapsedMilliseconds);
+            env.asmBlocks = ExtractAsm4GCNBlocks(ref source, log, out success);
+            if (sw != null) log.AppendFormat("ExtractAsm4GCNBlocks {0}ms ->", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString(); return false; }
 
             /////////// Step: compile the pulled Asm4GCN blocks to binary and note the byteSize, 
@@ -71,28 +74,28 @@ namespace OpenClWithGcnNS
 
             /////////// Step: compile Asm4GCN Blocks into binary ///////////
             CompileGcnBlocks(log, env.asmBlocks, out success);
-            if (sw != null) log.AppendFormat("ExtractAsm4GCNBlocks ms: {0}", sw.ElapsedMilliseconds);
+            if (sw != null) log.AppendFormat("CompileGcnBlocks {0}ms ->", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString(); return false; }
 
             /////////// Step: Replace __Asm Blocks with dummy code (using byteSize, sReg and vReg counts above)
             string sourceWithDummyKernels = ReplaceAsm4GCNBlocksWithDummyKernel(source, env.asmBlocks);
-            if (sw != null) log.AppendFormat("ReplaceAsm4GCNBlocksWithDummyKernel ms: {0}", sw.ElapsedMilliseconds);
+            if (sw != null) log.AppendFormat("ReplaceAsm4GCNBlocksWithDummyKernel {0}ms ->", sw.ElapsedMilliseconds);
 
             /////////// Step: Create Program From OpenCl source with dummy kernels
             success = CreateBinaryFromOpenClSource(sourceWithDummyKernels, log);
-            if (sw != null) log.AppendFormat("Check for any compilation errors ms: {0}", sw.ElapsedMilliseconds);
+            if (sw != null) log.AppendFormat("CreateBinaryFromOpenClSource {0}ms ->", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString() + "ERROR: CreateBinaryFromOpenClSource() failed"; return false; }
 
             /////////// Step: Extract the Binaries for the compiled dummy kernels
             env.dummyBin = env.program.Binaries[0];
-            if (sw != null) log.AppendFormat("GetBinariesFromProgram ms: {0}", sw.ElapsedMilliseconds);
+            if (sw != null) log.AppendFormat("GetBinariesFromProgram {0}ms ->", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString() + "ERROR: GetBinariesFromProgram() failed"; return false; }
 
             /////////// Step: Replace the Dummy binary code with the compiled GCN binary code
             env.patchedBin = new byte[env.dummyBin.Length];
             Buffer.BlockCopy(env.dummyBin, 0, env.patchedBin, 0, env.dummyBin.Length);
             ReplaceDummyBinaryWithAsm4GCNBinary(env.asmBlocks, env.deviceCt, env.patchedBin);
-            if (sw != null) log.AppendFormat("Reload the modified Binaries ms: {0}", sw.ElapsedMilliseconds);
+            if (sw != null) log.AppendFormat("Reload the modified Binaries {0}ms ->", sw.ElapsedMilliseconds);
 
             /////////// Step: reload the modified Binaries 
             byte[][] bins = {env.patchedBin};
@@ -131,10 +134,17 @@ namespace OpenClWithGcnNS
             if (sw != null) Console.WriteLine("Modify Binaries ms: {0}", sw.ElapsedMilliseconds);
         }
 
-
+        /// <summary>This is a copy of the last dummy source code so we can see if it changed.</summary>
+        private string  last_sourceWithDummy = "";
+        /// <summary>This the success result of the cached copy of the last dummy source code.</summary>
+        private bool    last_success = false;
         /// <summary>Create Program From OpenCl source and dummy kernels</summary>
         private bool CreateBinaryFromOpenClSource(string sourceWithDummys, StringBuilder log)
         {
+            // already cached? If so, lets use the last program we built
+            if (last_sourceWithDummy == sourceWithDummys)
+                return last_success;
+
             env.program = env.context.CreateProgramWithSource(sourceWithDummys);
             if (sw != null) Console.WriteLine("CreateProgramWithSource ms: {0}", sw.ElapsedMilliseconds);
 
@@ -152,6 +162,9 @@ namespace OpenClWithGcnNS
             BuildStatus bs = env.program.GetBuildStatus(env.program.Devices[0]);
             if (bs != BuildStatus.Success)
                 Console.WriteLine("\nError in GetProgramBuildInfo: " + env.program.GetBuildLog(env.program.Devices[0]));
+
+            last_sourceWithDummy = sourceWithDummys;
+            last_success = (bs == BuildStatus.Success);
 
             return (bs == BuildStatus.Success);
         }
@@ -177,31 +190,43 @@ namespace OpenClWithGcnNS
             return sourceWithDummies.ToString();
         }
 
+        Regex commentSpace = new Regex(@" /\*(.*?)\*/|//(.*?)\r?\n|""((\\[^\n]|[^""\n])*)""|@(""[^""]*"")+", // source Timwi '10 http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp 
+    RegexOptions.Singleline | RegexOptions.Compiled);
 
-        /// <summary>Extracts all __asm4GCN blocks</summary>
+        const string space = @"(\s*?)";//@"(\s*?|(@(?:""[^""]*"")+|""(?:[^""\n\\]+|\\.)*""|'(?:[^'\n\\]+|\\.)*')|//.*|/\*(?s:.*?)\*/)*";   // This regex represents whitespace and/or comments  source: Qtax '12 http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp 
+        Regex matchAsm4GcnBlock = new Regex(@"
+(?<headerArea>" + // catch whole header so we count newlines for error line number alignment
+    "__asm4GCN" + space + @"(?<funcName>[a-zA-Z_][a-zA-Z0-9_]*)" + space + @"\(" + space + @"
+    (
+        " + space + @"
+        (?<dataType>(unsigned|signed)?[a-z]{3,6}(\s*\*)?)" + space + @"
+        (?<name>|[a-zA-Z_][a-zA-Z0-9_]*)" + space + @",?
+    )*
+    " + space + @"?\)" + space + @"\{" + space + @"
+)
+(?<block>[^\}]*?)
+\}" + space + @";?", RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+
+        /// <summary>Extracts all __asm4GCN blocks and removes comments from source</summary>
         /// <param name="source">This is the device source code.  I can contain __kernels(OpenCL) and/or __asmBlocks.</param>
         /// <returns>A list of AsmBlocks. An AsmBlock contains the __asmBlock's information and binary code.</returns>
-        private List<AsmBlock> ExtractAsm4GCNBlocks(string source, StringBuilder log, out bool success)
+        private List<AsmBlock> ExtractAsm4GCNBlocks(ref string source, StringBuilder log, out bool success)
         {
-            List<AsmBlock> asmBlocks = new List<AsmBlock>();
-            success = true; // true if either the Asm4GCNBlock format is incorrect or if there are any asm errors.
+            success = true; // true if either the Asm4GCNBlock format is incorrect
 
-            // This regex represents whitespace and/or comments
-            const string space = @"(\s*?|(@(?:""[^""]*"")+|""(?:[^""\n\\]+|\\.)*""|'(?:[^'\n\\]+|\\.)*')|//.*|/\*(?s:.*?)\*/)*"; // source: Qtax '12 http://stackoverflow.com/questions/3524317/regex-to-strip-line-comments-from-c-sharp 
-            
-            
-            MatchCollection matches = Regex.Matches(source, @"
-                (?<headerArea> #catch whole header so we count newlines for error line number alignment
-                  __asm4GCN"+space+@"(?<funcName>[a-zA-Z_][a-zA-Z0-9_]*)"+space+@"\("+space+@"
-                  (
-                       "+space+@"
-                       (?<dataType>(unsigned|signed)?[a-z]{3,6}(\s*\*)?)" + space + @"
-                       (?<name>|[a-zA-Z_][a-zA-Z0-9_]*)" +space+@",?
-                  )*
-                  "+space+@"?\)"+space+@"\{"+space+@"
-                )
-                (?<block>[^\}]*?)
-                \}"+space+@";?", RegexOptions.ExplicitCapture | RegexOptions.IgnorePatternWhitespace | RegexOptions.Compiled);
+            // This remove comments
+            source = commentSpace.Replace(source,
+            me =>
+            {
+                if (me.Value.StartsWith("/*") || me.Value.StartsWith("//"))
+                    return me.Value.StartsWith("//") ? Environment.NewLine : "";
+                return me.Value; // Keep the literal strings
+            });
+
+            // Decode __asm4GCN block
+            MatchCollection matches = matchAsm4GcnBlock.Matches(source);
+
+            List<AsmBlock> asmBlocks = new List<AsmBlock>();
 
             if (matches.Count == 0)
             {
@@ -274,7 +299,6 @@ namespace OpenClWithGcnNS
                 }
                 asmBlocks.Add(blk);
             }
-
             return asmBlocks;
         }
 
@@ -381,9 +405,10 @@ namespace OpenClWithGcnNS
             Version[] testedOK = new Version[]   
             {
                 Version.Parse("13.251.9001.0"),
-                Version.Parse("14.501.1003.0")
+                Version.Parse("14.501.1003.0"),
+                Version.Parse("15.200.1062.1004")
             };
-            const string recommend = "(Known working with 14.501.1003.0)";
+            const string recommend = "(Known working with 14.501.1003 or 15.200.1062)";
 
             StringBuilder msg = new StringBuilder();
             bool anyAmdGpuFound = false;

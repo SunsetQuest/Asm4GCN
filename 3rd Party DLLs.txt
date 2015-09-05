@@ -6,3 +6,6 @@ AutocompleteMenu.dll - this project was used for autocomplete.  The source code 
 
 FastColoredTextBox.dll - this project was used for the syntax highlighting textbox.  The source code can be found here:
  -http://www.codeproject.com/Articles/161871/Fast-Colored-TextBox-for-syntax-highlighting
+
+NOpenCL.dll - a really nice wrapper in C# for OpenCl
+ - https://github.com/tunnelvisionlabs/NOpenCL

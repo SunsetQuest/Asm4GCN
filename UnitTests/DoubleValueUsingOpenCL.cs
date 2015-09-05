@@ -22,7 +22,6 @@ namespace UnitTests
                 }; ";
 
 
-
             /************ Initialize OpenClWithGCN    ***************************************/
             OpenClWithGCN gprog = new OpenClWithGCN();
             OpenClEnvironment env = gprog.env;
@@ -54,7 +53,7 @@ namespace UnitTests
             /************ Read back and Validate the results ***********************************/
             float[] results = new float[count];
             env.cmdQueue.EnqueueReadBufferAndWait(cl_output, results, dataSz);
-            int correct = Enumerable.Range(0, count).Select(i => results[i] == data[i] * 2).Count();
+            int correct = Enumerable.Range(0, count).Where(i => results[i] == data[i] * 2).Count();
             Console.WriteLine("{0} - Computed {1}/{2} correct values!",
                 correct == count ? "PASS" : "FAIL", correct.ToString(), count.ToString());
 

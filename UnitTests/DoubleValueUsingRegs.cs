@@ -111,7 +111,7 @@ namespace UnitTests
             int correct = 0;
             for (int i = 0; i < count; i++)
                 correct += (results[i] == data[i] + data[i]) ? 1 : 0;
-            // int correct = Enumerable.Range(0,count).Select(i=>results[i]==data[i]*2).Count();
+            // int correct = Enumerable.Range(0,count).Where(i=>results[i]==data[i]*2).Count();
 
             /************ Print a brief summary detailing the results **************************/
             Console.WriteLine("{0} - Computed {1}/{2} correct values!",

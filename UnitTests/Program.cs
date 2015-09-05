@@ -12,7 +12,8 @@ namespace UnitTests
             (new DoubleValueUsingVars()).Run();
             (new DoubleValueUsingOpenCL()).Run();
             (new FastWavefrontReductions()).Run();
-
+            (new TestCachedPrograms()).Run();
+            
             Console.ReadKey();
         }
     }
