@@ -42,7 +42,7 @@ namespace OpenClWithGcnNS
 
             this.env = env;
         }
-                
+
         /// <summary>
         /// Compiles the source code with _Asm4GCN blocks into a program.
         /// </summary>
@@ -98,9 +98,9 @@ namespace OpenClWithGcnNS
             if (sw != null) log.AppendFormat("Reload the modified Binaries {0}ms ->", sw.ElapsedMilliseconds);
 
             /////////// Step: reload the modified Binaries 
-            byte[][] bins = {env.patchedBin};
+            byte[][] bins = { env.patchedBin };
             ReloadModifiedBinaries(env.deviceCt, env.patchedBin.Length, bins);
-            
+
             env.lastMessage = log.ToString();
 
             return true;
@@ -135,9 +135,9 @@ namespace OpenClWithGcnNS
         }
 
         /// <summary>This is a copy of the last dummy source code so we can see if it changed.</summary>
-        private string  last_sourceWithDummy = "";
+        private string last_sourceWithDummy = "";
         /// <summary>This the success result of the cached copy of the last dummy source code.</summary>
-        private bool    last_success = false;
+        private bool last_success = false;
         /// <summary>This the success result of the cached copy of the last dummy source code.</summary>
         private Program last_program;
         /// <summary>Create Program From OpenCl source and dummy kernels</summary>
@@ -163,7 +163,7 @@ namespace OpenClWithGcnNS
             }
 
             if (sw != null) Console.WriteLine("BuildProgram ms: {0}", sw.ElapsedMilliseconds);
-            
+
             BuildStatus bs = env.program.GetBuildStatus(env.program.Devices[0]);
             if (bs != BuildStatus.Success)
                 Console.WriteLine("\nError in GetProgramBuildInfo: " + env.program.GetBuildLog(env.program.Devices[0]));
@@ -256,13 +256,13 @@ namespace OpenClWithGcnNS
                     string type = m.Groups["dataType"].Captures[c].Value;
                     string name = m.Groups["name"].Captures[c].Value;
 
-                    if (name == "") 
+                    if (name == "")
                         name = "auto_gen_var_name_" + c;
                     else
                         log.AppendLine("WARN: Parameter names are not used in __asm4GCN. Example Use: __asm4GCN myFunc(uint, uint) {...}");
 
                     type = new string(type.ToCharArray().Where(w => !Char.IsWhiteSpace(w)).ToArray()); // remove whitespace
-                    
+
                     string gcnType = "";
                     if (type.EndsWith("*"))
                         gcnType = "s4u";
@@ -289,7 +289,7 @@ namespace OpenClWithGcnNS
                             case "unsighedshort": gcnType = "s2u"; break;
                             case "signedlong": gcnType = "s8i"; break;
                             case "unsighedlong": gcnType = "s8u"; break;
-                        
+
                             default:
                                 throw new Exception("ERROR: " + type + " is not a recognized param dataType for an _asm4GCN block.");
                         }
@@ -383,18 +383,17 @@ namespace OpenClWithGcnNS
 
             programSource.AppendLine(@"
 	{
-		 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidentally run this
-		
 		// Add to kernel's overall size
-		if(SIZE_CT>100)
+		if(SIZE_CT>30)
         {
 			float tmp = *(float*)&x;
 			#pragma unroll 
-			for(long i=0; i<SIZE_CT-100; i++)
+			for(long i=0; i<SIZE_CT-30; i++)
 				tmp = rsqrt(tmp);
 			x.f = *(uint*)&tmp;
         }
 	}
+	 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidentally run this
 
 	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 
@@ -408,7 +407,7 @@ namespace OpenClWithGcnNS
         public static string CheckGPUAndVersion()
         {
             // Create a list of valid versions. The list must be sorted.
-            Version[] testedOK = new Version[]   
+            Version[] testedOK = new Version[]
             {
                 Version.Parse("13.251.9001.0"),
                 Version.Parse("14.501.1003.0"),
@@ -526,12 +525,12 @@ namespace OpenClWithGcnNS
                 for (int i = start; i <= searchIn.Length - searchBytes.Length; i++)
                 {
                     // if the start bytes match we will start comparing all other bytes
-                    if ((maskBytes[0] & searchIn[i]) == (maskBytes[0] & searchBytes[0])) 
+                    if ((maskBytes[0] & searchIn[i]) == (maskBytes[0] & searchBytes[0]))
                     {
                         // multiple bytes to be searched we have to compare byte by byte
                         matched = true;
                         for (int y = 1; y <= searchBytes.Length - 1; y++)
-                            if ((maskBytes[y] & searchIn[i+y]) != (maskBytes[y] & searchBytes[y]))
+                            if ((maskBytes[y] & searchIn[i + y]) != (maskBytes[y] & searchBytes[y]))
                             {
                                 matched = false;
                                 break;
