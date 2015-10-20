@@ -2,9 +2,11 @@
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without any warranty.
 
+using System;
 using NOpenCL;
 using System.Collections.Generic;
 using GcnTools;
+using System.Linq;
 
 namespace OpenClWithGcnNS
 {
@@ -40,12 +42,22 @@ namespace OpenClWithGcnNS
         /// <summary> Setup an default environment with to work with.  (optional)</summary>
         public static OpenClEnvironment InitializeWithDefaults()
         {
-            OpenClEnvironment env = new OpenClEnvironment();
-            env.platforms = Platform.GetPlatforms(); 
-            env.devices =  env.platforms[0].GetDevices(DeviceType.Gpu); //todo: get rid of[0]
-            env.context = Context.Create(env.devices);
-            env.cmdQueue = env.context.CreateCommandQueue(env.devices[0]);
+            OpenClEnvironment env = null;
+
+            // lets make sure we only include AMD platforms here
+            Platform[] platforms = Platform.GetPlatforms().Where(
+                t => t.Name.Contains("Advanced Micro Devices") || t.Name.Contains("AMD")).ToArray();
+
+            if (platforms.Count() > 0)
+            {
+                env = new OpenClEnvironment();
+                env.platforms = platforms;
+                env.devices = env.platforms[0].GetDevices(DeviceType.Gpu); //todo: get rid of[0]
+                env.context = Context.Create(env.devices);
+                env.cmdQueue = env.context.CreateCommandQueue(env.devices[0]);
+            }
             return env;
+
         }
     }
 

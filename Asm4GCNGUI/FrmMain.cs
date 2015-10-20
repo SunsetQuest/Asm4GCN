@@ -38,6 +38,9 @@ namespace Asm4GcnGUI
             if (gpuInfo.Length > 0)
                 txtOutput.AppendText(gpuInfo);
 
+            if (gcn.env == null)
+                txtOutput.AppendText("Unable to find an AMD platform.");
+
             /////////////////// Copy needed exe/dll files to output folder ///////////////////
             if (!Directory.Exists(outputFolder))
                 Directory.CreateDirectory(outputFolder);
