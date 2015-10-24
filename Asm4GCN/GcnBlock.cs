@@ -90,7 +90,7 @@ namespace GcnTools
             // StringBuilder sb = new StringBuilder();
             //Future: Maybe use string builder here
 
-            // apply #defines, strip out comments, cleanup, record last time each var is used.
+            // Apply #defines, strip out comments, cleanup, record last time each var is used.
             bool inCommentMode = false;
             List<Variable> pendingNewVarsToAddToNextStmt = new List<Variable>(); ; // pending New Variables To Add To Next Stmt
             List<Label> pendingLabelsToAddToNextStmt = new List<Label>(); ; // pending New Labels that need a Stmt attached
@@ -101,8 +101,20 @@ namespace GcnTools
                 while (curLine.EndsWith(@"\"))
                     curLine = curLine.Remove(curLine.Length-1) + srcLines[line++];
 
-                PreProcess(curLine, ref inCommentMode, line, ref pendingNewVarsToAddToNextStmt, ref pendingLabelsToAddToNextStmt, log);
+                // cleanup comments and whitespace
+                curLine = CleanupComments(curLine, ref inCommentMode, line, log);
+
+                // cleanup defines
+                curLine = ProcessDefines(curLine, log);
+
+                // Lets split up the multiple statements that might be on this one line.
+                String[] stmts = curLine.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+
+                // Process each statement on this line.
+                for (int stmtNumberOnLine = 0; stmtNumberOnLine < stmts.Length; stmtNumberOnLine++)
+                    ProcessSingleStmt(curLine, stmts[stmtNumberOnLine], line, stmtNumberOnLine, ref pendingNewVarsToAddToNextStmt, pendingLabelsToAddToNextStmt, log, stmts);
             }
+
 
             // Process remaining labels that pointed to exit (since there are no stmt-headers after the last statement, exit labels need .)
             foreach (Label label in pendingLabelsToAddToNextStmt)
@@ -111,10 +123,10 @@ namespace GcnTools
                 labels.AddLabel(label, log);
             }
             
-            // automatic variable freeing
+            // Process Automatic variable freeing.
             vars.ProcessAutomaticFreeing(gcnStmts);
 
-            // process register assignments
+            // Process register assignments.
             vars.AssignRegNumbers(gcnStmts);
 
             // Convert each statement into in to binary (delay statements with variables)
@@ -362,13 +374,15 @@ namespace GcnTools
             }
         }
 
-        private void PreProcess(string curLine, ref bool inCommentMode, int lineNum, ref List<Variable> pendingNewVarsToAddToNextStmt,
-            ref List<Label> pendingLabelsToAddToNextStmt, Log log)
+        /// <summary>
+        /// Cleans up a line and removes any non-functional information such as comments or whitespace.
+        /// </summary>
+        private string CleanupComments(string curLine, ref bool inCommentMode, int lineNum, Log log)
         {
             // Skip empty lines
             if (string.IsNullOrWhiteSpace(curLine))
-                return;
-            
+                return string.Empty;
+
             string origLine = curLine;
 
             log.lineNum = lineNum;
@@ -386,7 +400,7 @@ namespace GcnTools
                     curLine = Regex.Replace(curLine, @".*\*/", "");
                 }
                 else
-                    return; // this entire line is in comment mode
+                    return string.Empty; // this entire line is in comment mode
             }
             else if (Regex.IsMatch(curLine, @"/\*.*")) // not inCommentMode AND opening comment found '\*'
             {
@@ -396,11 +410,24 @@ namespace GcnTools
 
             // Strip out "//" style comments
             int indexOfComment = curLine.IndexOf(@"//");
-            if ( indexOfComment >= 0 )
+            if (indexOfComment >= 0)
                 if (indexOfComment == 0)
-                    return; // this entire line is in comment mode
+                    return string.Empty; // this entire line is in comment mode
                 else
                     curLine = curLine.Remove(indexOfComment).TrimEnd();
+
+            // split out the different statements on a single line
+            return curLine;
+        }
+
+        /// <summary>
+        /// Both reads new #defines labels and processes them on the line.
+        /// </summary>
+        private string ProcessDefines(string curLine, Log log)
+        {
+            // Skip empty lines (after removing comments and doing defines)
+            if (string.IsNullOrWhiteSpace(curLine))
+                return string.Empty;
 
             ///////// Process new #Defines /////////
             // lets see if the first word is a #define
@@ -417,7 +444,7 @@ namespace GcnTools
                 if (!def.Groups["name"].Success | !def.Groups["main"].Success)
                 {
                     log.Error("unrecognized #define '{0}'", curLine);
-                    return;
+                    //return null;
                 }
                 Define define = new Define { name = def.Groups["name"].Value };
                 if (def.Groups["params"].Success)
@@ -451,7 +478,7 @@ namespace GcnTools
 
                 defines.Add(define);
                 curLine = "";
-                return;
+                //return null;
             }
 
             /////////   Replace Defines   /////////
@@ -474,7 +501,7 @@ namespace GcnTools
                     string items = (define.defParams.Length - 1).ToString();
                     string searchFor = define.name + @"\((?<1>[^\r\n,\)\(]+?)(?:,(?<1>[^\r\n,\)\(]+?)){" + items + @"}\)";
 
-                    curLine = Regex.Replace(curLine, searchFor, delegate(Match m)
+                    curLine = Regex.Replace(curLine, searchFor, delegate (Match m)
                     {
                         int curParamNum = 0;
                         string val = define.data;
@@ -485,176 +512,172 @@ namespace GcnTools
                 }
             }
 
-            // Normalize empty lines (after removing comments and doing defines)
-            if (string.IsNullOrWhiteSpace(curLine))
-                return;
-
-
-            // Lets split up multiple statements on one line
-            string[] stmts = curLine.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
-            for (int stmtNumberOnLine = 0; stmtNumberOnLine < stmts.Length; stmtNumberOnLine++)
-            {
-                string stmtText = stmts[stmtNumberOnLine];
-
-                // Split out label from statement and record any labels on the line
-                Match l = Regex.Match(stmtText, @"([a-z_][a-z0-9_]*):(\s|$)");
-                if (l.Success)
-                {
-                    pendingLabelsToAddToNextStmt.Add(new Label() { labelName = l.Groups[1].Value, lineNum = lineNum });
-                    if (l.Length == stmtText.Length)
-                        continue;
-                    stmtText = stmtText.Remove(0, l.Length);
-                }
-
-                // Extract first word, and options
-                char[] delimiterChars = { ',', ' ' };
-                string[] commands = stmtText.Split(delimiterChars, 2, StringSplitOptions.RemoveEmptyEntries);
-                string firstWord = commands[0];
-                //string options = commands.Count() > 1 ? commands[1].Trim() : "";
-
-                Stmt stmt = new Stmt()
-                {
-                    options = commands.Count() > 1 ? commands[1].Trim() : "",
-                    lineNum = lineNum,
-                    lineDepth = stmtNumberOnLine,
-                    fullStmt = stmtText,
-                    GcnStmtId = gcnStmts.Count,
-                };
-
-                /////////  Process Register Reservations, Renaming and Freeing /////////
-                // New Format: [sv][1248][fiub][#] VarName    Free Format: free VarName
-                // ren cat dog
-                if (firstWord == "free")
-                {
-                    string[] matches = stmt.options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
-                    foreach (string name in matches)
-                        vars.FreeVariable(name, gcnStmts);
-                    continue;
-                }
-
-                ///////// Process #S_POOL / #V_POOL  -->  sRegPool/vRegPool /////////
-                //string cmd = Regex.Match(curLine, @"(?<=^\ *\#)(define|ref|[vs]_pool)").Value;
-                if (firstWord == "#v_pool" || firstWord == "#s_pool")
-                {
-                    // skip line if #S_POOL / #V_POOL
-                    if (!vars.UsingRegPools)
-                        continue;
-
-                    // Show warning if there are already existing vars.
-                    if (vars.Count > 0)
-                        log.Warning("#S_POOL / #V_POOL normally occur in the header area. Having this command in the "
-                            + "body can be used to clear all variable names and pool reservations.");
-
-                    Match def = Regex.Match(curLine, @"^\ *#(v|s)_pool\ *(?:(?:[vs](\d+)|(\S+?))\s*,?\s*)+");
-                    if (!def.Groups[0].Success | !def.Groups[2].Success)
-                    {
-                        log.Error("error processing #POOL statement in '{0}'", curLine);
-                        continue;
-                    }
-
-                    if (def.Groups[3].Success)
-                        log.Error("unknown value '{0}' in POOL command (skipping)", def.Groups[3]);
-
-                    int[] available_Regs = new int[def.Groups[2].Captures.Count];
-                    for (int i = 0; i < available_Regs.Length; i++)
-                        available_Regs[i] = Int32.Parse(def.Groups[2].Captures[i].Value);
-
-                    vars.ReloadRegPool(def.Groups[1].Value[0], available_Regs);
-
-                    continue;  // we are done with this statement.
-                }
-
-                ///////// Process Variable Declarations /////////
-                // Example: s_mov_b32 v8u ttt, aaa, bbb
-                // Example: s_mov_b32 v8u ttt S4, aaa, bbb
-                // Example: v4u myVar0 s[2:3]; 
-                // Example: s4u myVar1 myVar0
-                // Single line Declarations
-                Match m = Regex.Match(firstWord, @"(?<1>s|v)(?<2>1|2|4|8|16)(?<3>[fiub])");
-                if (m.Success)
-                {
-                    char type = m.Groups[1].Value[0];
-                    int size = Int32.Parse(m.Groups[2].Value);
-                    char dataType = m.Groups[3].Value[0];
-
-                    vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, stmt.options);
-                    continue;
-                }
-
-                // Inline Declarations
-                var inlines = Regex.Matches(stmt.options, @"(?<![a-z_0-9])(?<2>s|v)(?<3>1|2|4|8|16)(?<4>[fiub]) " +
-                    @"(?<5>(?<6>[a-z_][a-z_0-9]*)" +
-                    @"( [a-z_][a-z_0-9]*(\[\d+(?::\d+)\])?)?)");
-
-                foreach (Match m3 in inlines)
-                {
-                    char type = m3.Groups[2].Value[0];
-                    int size = Int32.Parse(m3.Groups[3].Value);
-                    char dataType = m3.Groups[4].Value[0];
-
-                    vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, m3.Groups[5].Value);
-                    stmt.options = stmt.options.Remove(m3.Index, m3.Length).Insert(m3.Index, m3.Groups[6].Value);
-                }
-
-                ///////// lookup instruction details /////////
-                if (!ISA_DATA.isa_inst_dic.TryGetValue(firstWord, out stmt.inst))
-                {
-                    log.Error("'{0}' is not a recognized instruction", firstWord);
-                    continue;
-                }
-
-                ///////// Record var names and location making sure to exclude reserved words /////////
-                var foundVars = Regex.Matches(stmt.options, @"(?<=,|\ |^)(?![vs]\d+)(([a-z_][a-z0-9_]*)(?:\[(\d+)\])?)(?=,|\ |$)");
-                foreach (Match r in foundVars)
-                {
-                    //Future: save char location so we don't have to search for the variable again when we do the replacement.
-
-                    string varName = r.Value;
-
-                    // ignore reserved words
-                    if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, varName) >= 0)
-                        continue;
-
-                    // ignore common register aliases
-                    if (ISA_DATA.sRegAliases.ContainsKey(varName))
-                        continue;
-
-                    int len = varName.Length;
-                    bool hasIndex = varName.EndsWith("]");
-                    int index = 0;
-                    int startPos = r.Index;
-
-                    if (hasIndex)
-                    {
-                        varName = r.Groups[2].Value;
-                        index = int.Parse(r.Groups[3].Value);
-                    }
-
-                    // Lets lookup the GcnVar to make sure it exists and also retrieve it.
-                    vars.MarkVariableUsedInStmt(stmt, varName, index, startPos, len);
-                };
-
-                ///////// Lets add the stmt to the list /////////
-                // Before adding, lets link any pending statements.
-                foreach (Label label in pendingLabelsToAddToNextStmt)
-                {
-                    label.firstStmt = stmt;
-                    labels.AddLabel(label, log);
-                }
-                pendingLabelsToAddToNextStmt.Clear();
-
-                // Also, lets link-up any new variables 
-                if (pendingNewVarsToAddToNextStmt.Count > 0)
-                {
-                    foreach (Variable v in pendingNewVarsToAddToNextStmt)
-                        v.stmtDeclared = stmt;
-
-                    stmt.newVars = pendingNewVarsToAddToNextStmt;
-                    pendingNewVarsToAddToNextStmt = new List<Variable>();
-                }
-                gcnStmts.Add(stmt);
-            }
+            return curLine;
         }
+
+        private void ProcessSingleStmt(string curLine, string stmtText, int lineNum, int stmtNumberOnLine, ref List<Variable> pendingNewVarsToAddToNextStmt, List<Label> pendingLabelsToAddToNextStmt, Log log, string[] stmts)
+        {
+            // Split out label from statement and record any labels on the line
+            Match l = Regex.Match(stmtText, @"([a-z_][a-z0-9_]*):(\s|$)");
+            if (l.Success)
+            {
+                pendingLabelsToAddToNextStmt.Add(new Label() { labelName = l.Groups[1].Value, lineNum = lineNum });
+                if (l.Length == stmtText.Length)
+                    return;
+                stmtText = stmtText.Remove(0, l.Length);
+            }
+
+            // Extract first word, and options
+            char[] delimiterChars = { ',', ' ' };
+            string[] commands = stmtText.Split(delimiterChars, 2, StringSplitOptions.RemoveEmptyEntries);
+            string firstWord = commands[0];
+            //string options = commands.Count() > 1 ? commands[1].Trim() : "";
+
+            Stmt stmt = new Stmt()
+            {
+                options = commands.Count() > 1 ? commands[1].Trim() : "",
+                lineNum = lineNum,
+                lineDepth = stmtNumberOnLine,
+                fullStmt = stmtText,
+                GcnStmtId = gcnStmts.Count,
+            };
+
+            /////////  Process Register Reservations, Renaming and Freeing /////////
+            // New Format: [sv][1248][fiub][#] VarName    Free Format: free VarName
+            // ren cat dog
+            if (firstWord == "free")
+            {
+                string[] matches = stmt.options.Split(delimiterChars, StringSplitOptions.RemoveEmptyEntries);
+                foreach (string name in matches)
+                    vars.FreeVariable(name, gcnStmts);
+                return;
+            }
+            
+            ///////// Process #S_POOL / #V_POOL  -->  sRegPool/vRegPool /////////
+            //string cmd = Regex.Match(curLine, @"(?<=^\ *\#)(define|ref|[vs]_pool)").Value;
+            if (firstWord == "#v_pool" || firstWord == "#s_pool")
+            {
+                // skip line if #S_POOL / #V_POOL
+                if (!vars.UsingRegPools)
+                    return;
+
+                // Show warning if there are already existing vars.
+                if (vars.Count > 0)
+                log.Warning("#S_POOL / #V_POOL normally occur in the header area. Having this command in the "
+                    + "body can be used to clear all variable names and pool reservations.");
+
+                Match def = Regex.Match(curLine, @"^\ *#(v|s)_pool\ *(?:(?:[vs](\d+)|(\S+?))\s*,?\s*)+");
+                if (!def.Groups[0].Success | !def.Groups[2].Success)
+                {
+                    log.Error("error processing #POOL statement in '{0}'", curLine);
+                    return;
+                }
+
+                if (def.Groups[3].Success)
+                    log.Error("unknown value '{0}' in POOL command (skipping)", def.Groups[3]);
+
+                int[] available_Regs = new int[def.Groups[2].Captures.Count];
+                for (int i = 0; i < available_Regs.Length; i++)
+                    available_Regs[i] = Int32.Parse(def.Groups[2].Captures[i].Value);
+
+                vars.ReloadRegPool(def.Groups[1].Value[0], available_Regs);
+
+                return;  // we are done with this statement.
+            }
+
+            ///////// Process Variable Declarations /////////
+            // Example: s_mov_b32 v8u ttt, aaa, bbb
+            // Example: s_mov_b32 v8u ttt S4, aaa, bbb
+            // Example: v4u myVar0 s[2:3]; 
+            // Example: s4u myVar1 myVar0
+            // Single line Declarations
+            Match m = Regex.Match(firstWord, @"(?<1>s|v)(?<2>1|2|4|8|16)(?<3>[fiub])");
+            if (m.Success)
+            {
+                char type = m.Groups[1].Value[0];
+                int size = Int32.Parse(m.Groups[2].Value);
+                char dataType = m.Groups[3].Value[0];
+
+                vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, stmt.options);
+                return;
+            }
+
+            // Inline Declarations
+            var inlines = Regex.Matches(stmt.options, @"(?<![a-z_0-9])(?<2>s|v)(?<3>1|2|4|8|16)(?<4>[fiub]) " +
+                @"(?<5>(?<6>[a-z_][a-z_0-9]*)" +
+                @"( [a-z_][a-z_0-9]*(\[\d+(?::\d+)\])?)?)");
+
+            foreach (Match m3 in inlines)
+            {
+                char type = m3.Groups[2].Value[0];
+                int size = Int32.Parse(m3.Groups[3].Value);
+                char dataType = m3.Groups[4].Value[0];
+
+                vars.AddVariable(pendingNewVarsToAddToNextStmt, stmt, log, type, size, dataType, m3.Groups[5].Value);
+                stmt.options = stmt.options.Remove(m3.Index, m3.Length).Insert(m3.Index, m3.Groups[6].Value);
+            }
+
+            ///////// lookup instruction details /////////
+            if (!ISA_DATA.isa_inst_dic.TryGetValue(firstWord, out stmt.inst))
+            {
+                log.Error("'{0}' is not a recognized instruction", firstWord);
+                return;
+            }
+
+            ///////// Record var names and location making sure to exclude reserved words /////////
+            var foundVars = Regex.Matches(stmt.options, @"(?<=,|\ |^)(?![vs]\d+)(([a-z_][a-z0-9_]*)(?:\[(\d+)\])?)(?=,|\ |$)");
+            foreach (Match r in foundVars)
+            {
+                //Future: save char location so we don't have to search for the variable again when we do the replacement.
+
+                string varName = r.Value;
+
+                // ignore reserved words
+                if (Array.BinarySearch<string>(ISA_DATA.AsmReserveDWords, varName) >= 0)
+                    continue;
+
+                // ignore common register aliases
+                if (ISA_DATA.sRegAliases.ContainsKey(varName))
+                    continue;
+
+                int len = varName.Length;
+                bool hasIndex = varName.EndsWith("]");
+                int index = 0;
+                int startPos = r.Index;
+
+                if (hasIndex)
+                {
+                    varName = r.Groups[2].Value;
+                    index = int.Parse(r.Groups[3].Value);
+                }
+
+                // Lets lookup the GcnVar to make sure it exists and also retrieve it.
+                vars.MarkVariableUsedInStmt(stmt, varName, index, startPos, len);
+            };
+
+            ///////// Lets add the stmt to the list /////////
+            // Before adding, lets link any pending statements.
+            foreach (Label label in pendingLabelsToAddToNextStmt)
+            {
+                label.firstStmt = stmt;
+                labels.AddLabel(label, log);
+            }
+            pendingLabelsToAddToNextStmt.Clear();
+
+            // Also, lets link-up any new variables 
+            if (pendingNewVarsToAddToNextStmt.Count > 0)
+            {
+                foreach (Variable v in pendingNewVarsToAddToNextStmt)
+                    v.stmtDeclared = stmt;
+
+                stmt.newVars = pendingNewVarsToAddToNextStmt;
+                pendingNewVarsToAddToNextStmt = new List<Variable>();
+            }
+            gcnStmts.Add(stmt);
+
+        }
+
+
 
         //private void ProcessLine(string curLine, List<GcnStmt> needLabelFilled, int line, Log log)
         private void ProcessStmt(Stmt stmt, List<Stmt> needLabelFilled, Log log)
