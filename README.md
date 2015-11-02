@@ -67,7 +67,28 @@ to re-use.
   - OpenClWithGCN update: updated driver version warning for new driver versions
   - Tests Update: Corrected issue in Validate results in unit tests.
   - Tests Update: Added a new test to OpenClWithGCN reuse.
-  
+
+- September 15 2015
+  - Improvement: (OpenClWithGCN Performance) Updated RegEx in ExtractAsm4GCNBlocks. Comments are now stripped out first. In addition, the RegEx has been brought outside of the function so it does not have to be re-created each time.
+  - Improvement: (OpenClWithGCN Performance) The last dummy source code is now cached so we can detect if there are changes. If there are no changes then we do not need to recompile it.
+  - Improvement: (OpenClWithGCN Performance) Overall, re-running a modified a __asm4GCN is now about 10x to 50x faster! First time calls are roughly 10% faster.
+  - Updated: OpenClWithGCN update: updated driver version warning for new driver versions
+  - Fix: Tests Update: Corrected issue in Validate results in unit tests.
+  - Add: Tests Update: Added a new test to OpenClWithGCN reuse.
+
+- September 21 2015  
+  - Fix: Fixed bug with dummy kernel. The dummy kernel was not expanding to the size it should so when large kernels were created they would not fit in the dummy kernels binary space.
+
+- October 19 2015  
+  - Fix: Fixed an bug when there was an AMD and NVidia GPU in the same system and the NVidia GPU came up first
+
+- October 24 2015  
+  - Refactored: Cleaned up GcnBlock.cs. Separated CleanupComments, processDefines, and processSingleStmt
+
+- November 9 2015
+  - New: Added a friendly sytax feature so that asm statements can be entered in a more readable format.  Example: "v_add_i32 localSizeIdx, vcc, laneId, vLocalSize" can now be added like "localSizeIdx = laneId + vLocalSize". It is easier to read. It is only supported on +,-,*,>>,<<.
+  - Refactor: Pulled out some of the Regular Expressions to their own file. This will be expanded on in the future.
+
 ###To-Do / Broken
 - cannot re-use the same variable name (maybe move these to a list under itself)
 - cannot have multiple __asm4GCN kernels
