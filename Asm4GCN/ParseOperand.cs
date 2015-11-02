@@ -1,6 +1,7 @@
 ﻿// Asm4GCN Assembler by Ryan S White (sunsetquest) http://www.codeproject.com/Articles/872477/Assembler-for-AMD-s-GCN-GPU
 // Released under the Code Project Open License (CPOL) http://www.codeproject.com/info/cpol10.aspx 
 // Source & Executable can be used in commercial applications and is provided AS-IS without any warranty.
+using GcnTools;
 using System;
 using System.Globalization;
 using System.Text.RegularExpressions;
@@ -34,13 +35,7 @@ namespace GcnTools
        /// <returns></returns>
         internal static uint parseUnSignedNumber(string val, int maxBitSize, int paramNo, Log log)
         {
-            Match m = Regex.Match(val, @"^(?i:" +
-                @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + // hex values 0x12AB
-                @"(?:0(?<1>o)(?<2>[0-7]+))|" + // oct values 0o7564
-                @"(?:0(?<1>b)(?<2>[01]+))|" + // bin values 0b1101010
-                @"(?<2>(?<1>\d)\d*(?:E[+-]?\d+)?)" + //simple number with optional exponent(nnnExx, nnnE+xx, and nnnE-xx)
-                //@"|(?:(?<1>@)(?<2>[a-z_][0-9a-z_]+))" + //labels  @myLabel  (removed: labels processed before parsing)
-                @")$");
+            Match m = Regex.Match(val, RegexRecognizers.UnSignedNumber);
 
             if (!m.Groups[2].Success)
             {
@@ -122,19 +117,7 @@ namespace GcnTools
                return opInfo;
             }
 
-            Match m = Regex.Match(val, @"^(?i:" +
-                @"(?:(?<1>s)(?<2>\d+))|" +  //scalier register snnn
-                @"(?:(?<1>s)\[(?<2>\d+):\d+\])|" + //scalier register s[nnn:nnn]
-                @"(?:(?<1>v)(?<2>\d+))|" +  //vector register vnnn
-                @"(?:(?<1>v)\[(?<2>\d+):\d+\])|" + //vector register v[nnn:nnn]
-                @"(?:0(?<1>x)(?<2>[0-9a-f]+))|" + //hex values 0x12AB
-                @"(?:0(?<1>o)(?<2>[0-7]+))|" + //oct values 0o7564
-                @"(?:0(?<1>b)(?<2>[01]+))|" + //bin values 0b1101010
-                @"(?:(?<2>-?\d*(?<1>\.)\d*)(?:E[+-]?\d+)?)|" + //float values with optional exponent -2.1E45
-                //@"(?:(?<1>)(?<2>[+-]?\d+))|"+ //simple number 
-                @"(?<2>-?(?<1>\d)\d*(?:E[+-]?\d+)?)" +//simple number with optional exponent(nnnExx, nnnE+xx, and nnnE-xx)
-                //@"|(?:(?<1>@)(?<2>[a-z_][0-9a-z_]+))" + //labels  @myLabel (removed: labels processed before parsing)
-                @")$");
+            Match m = Regex.Match(val, RegexRecognizers.Operand);
 
             if (!m.Groups[2].Success)
             {

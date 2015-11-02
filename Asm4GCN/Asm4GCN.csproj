@@ -56,6 +56,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DataStructs.cs" />
+    <Compile Include="FriendlyConverter.cs" />
     <Compile Include="GcnISA.cs" />
     <Compile Include="Labels.cs" />
     <Compile Include="Log.cs" />
@@ -64,6 +65,7 @@
     <Compile Include="ParseOperand.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RegexRecognizers.cs" />
     <Compile Include="RegPool.cs" />
     <Compile Include="RegUsage.cs" />
     <Compile Include="Tools.cs" />

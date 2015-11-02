@@ -13,7 +13,8 @@ namespace UnitTests
             (new DoubleValueUsingOpenCL()).Run();
             (new FastWavefrontReductions()).Run();
             (new TestCachedPrograms()).Run();
-            
+            (new FriendlyStatements()).Run();
+
             Console.ReadKey();
         }
     }

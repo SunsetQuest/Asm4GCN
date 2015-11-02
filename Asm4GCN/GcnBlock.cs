@@ -23,16 +23,18 @@ namespace GcnTools
         public List<Define> defines = new List<Define>();
         /// <summary>Contains variable names with their currently assigned register.</summary>
         public Variables vars;
+        /// <summary>Selected ISA generation to compile.</summary>
+        public int ISA_Gen = 2; //default to 2;
 
 
         /// <summary>
         /// Compiles for both specifications and binary output. 
         /// </summary>
-        public byte[] CompileFull(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage, 
+        public byte[] CompileFull(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage,
             out List<RegUsage> vRegUsage, out int binSize, out string logOutput, out bool compileSuccessful)
         {
             Log log = new Log();
-            vars = new Variables(UseRegPool: true, CalcRegUsage: true, log:log);
+            vars = new Variables(UseRegPool: true, CalcRegUsage: true, log: log);
 
             byte[] bin = Compile(srcLines, out binSize, log);
 
@@ -49,7 +51,7 @@ namespace GcnTools
         /// CompileWithoutSpecs is used in conjunction with CompileForBin. Its primary use is to get 
         /// the number of registers and size needs of the asm block.
         /// </summary>
-        public void CompileForSpecs(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage, 
+        public void CompileForSpecs(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage,
             out List<RegUsage> vRegUsage, out int binSize, out string logOutput)
         {
             Log log = new Log();
@@ -68,7 +70,7 @@ namespace GcnTools
         /// CompileForBin takes an asm block and creates a bin. #s_pool and #v_pool can optionally 
         /// be used to specify what register numbers are available.
         /// </summary>
-        public byte[] CompileForBin(string[] srcLines, out List<Stmt> _gcnStmts, out int binSize, 
+        public byte[] CompileForBin(string[] srcLines, out List<Stmt> _gcnStmts, out int binSize,
             out string logOutput, out bool compileSuccessful)
         {
             Log log = new Log();
@@ -83,7 +85,7 @@ namespace GcnTools
             return bin;
         }
 
-        
+
         private byte[] Compile(string[] srcLines, out int binSize, Log log)
         {
             // log.WriteLine("Starting Lines: {0} ms", startedAt.ElapsedMilliseconds);
@@ -94,12 +96,12 @@ namespace GcnTools
             bool inCommentMode = false;
             List<Variable> pendingNewVarsToAddToNextStmt = new List<Variable>(); ; // pending New Variables To Add To Next Stmt
             List<Label> pendingLabelsToAddToNextStmt = new List<Label>(); ; // pending New Labels that need a Stmt attached
-            
+
             for (int line = 1; line < srcLines.Length + 1; line++)  // from lines 1 to Last
             {
                 string curLine = srcLines[line - 1];
                 while (curLine.EndsWith(@"\"))
-                    curLine = curLine.Remove(curLine.Length-1) + srcLines[line++];
+                    curLine = curLine.Remove(curLine.Length - 1) + srcLines[line++];
 
                 // cleanup comments and whitespace
                 curLine = CleanupComments(curLine, ref inCommentMode, line, log);
@@ -122,7 +124,7 @@ namespace GcnTools
                 label.isAtEnd = true;
                 labels.AddLabel(label, log);
             }
-            
+
             // Process Automatic variable freeing.
             vars.ProcessAutomaticFreeing(gcnStmts);
 
@@ -149,7 +151,7 @@ namespace GcnTools
             {
                 Stmt stmt = gcnStmts[i];
                 if (stmt.opSize != stmt.opCode.Size)
-                    log.Error("ERROR: (internal) Stmt {0} on line {1} has an opSize of {2} however HasValue is {3}", 
+                    log.Error("ERROR: (internal) Stmt {0} on line {1} has an opSize of {2} however HasValue is {3}",
                         stmt.inst.name, stmt.lineNum, stmt.opSize, stmt.opCode.literal.HasValue);
                 if (stmt.opSize == 0)
                     log.WriteLine("Stmt {0} had an opSizeOfZero");
@@ -163,7 +165,7 @@ namespace GcnTools
             /////////// Lets print all the logs & warnings ///////////
             if (log.hasErrors)
                 log.WriteLine("One or more Error(s) in GCN Assembly");
-            
+
             /////////// Get bin size ///////////
             binSize = 0;
             foreach (Stmt stmt in gcnStmts)
@@ -244,7 +246,7 @@ namespace GcnTools
                     int minDistance = 0;
                     int maxDistance = 0;
 
-                    string optionsMax = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
+                    string optionsMax = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate (Match m)
                     {
                         string labelName = m.Value.Remove(0, 1);
                         Label label;
@@ -291,7 +293,7 @@ namespace GcnTools
                     //// if the largest jump length results in a 1 word op, use 1 and short circuit to next statement ////
                     if (!opCodeMax.literal.HasValue && !logMax.hasErrors)
                     {
-                        stmt.opSize = 1; 
+                        stmt.opSize = 1;
 
                         // we should update the rest of the  maxDists[]  here
                         for (int i = stmt.GcnStmtId; i < gcnStmts.Count; i++)
@@ -302,7 +304,7 @@ namespace GcnTools
 
 
                     /////// lets try again but with the shortest distances possible. If still size 8 then it's 8. /////
-                    string optionsMin = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
+                    string optionsMin = stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate (Match m)
                     {
                         string labelName = m.Value.Remove(0, 1);
                         Label label;
@@ -350,7 +352,7 @@ namespace GcnTools
             foreach (Stmt stmt in needLabelFilled)
             {
                 // Lets Convert labels to hex values
-                stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate(Match m)
+                stmt.options = Regex.Replace(stmt.options, @"@[a-z_][0-9a-z_]+", delegate (Match m)
                 {
                     string labelName = m.Value.Remove(0, 1);
                     Label nearestLabel;
@@ -527,6 +529,9 @@ namespace GcnTools
                 stmtText = stmtText.Remove(0, l.Length);
             }
 
+            // Replace Friendly statements with Asm statements
+            stmtText = FriendlyConverter.FriendlyFormatToAsmFormater(stmtText, vars, ISA_Gen, log);
+
             // Extract first word, and options
             char[] delimiterChars = { ',', ' ' };
             string[] commands = stmtText.Split(delimiterChars, 2, StringSplitOptions.RemoveEmptyEntries);
@@ -552,7 +557,7 @@ namespace GcnTools
                     vars.FreeVariable(name, gcnStmts);
                 return;
             }
-            
+
             ///////// Process #S_POOL / #V_POOL  -->  sRegPool/vRegPool /////////
             //string cmd = Regex.Match(curLine, @"(?<=^\ *\#)(define|ref|[vs]_pool)").Value;
             if (firstWord == "#v_pool" || firstWord == "#s_pool")
@@ -563,8 +568,8 @@ namespace GcnTools
 
                 // Show warning if there are already existing vars.
                 if (vars.Count > 0)
-                log.Warning("#S_POOL / #V_POOL normally occur in the header area. Having this command in the "
-                    + "body can be used to clear all variable names and pool reservations.");
+                    log.Warning("#S_POOL / #V_POOL normally occur in the header area. Having this command in the "
+                        + "body can be used to clear all variable names and pool reservations.");
 
                 Match def = Regex.Match(curLine, @"^\ *#(v|s)_pool\ *(?:(?:[vs](\d+)|(\S+?))\s*,?\s*)+");
                 if (!def.Groups[0].Success | !def.Groups[2].Success)
@@ -603,7 +608,7 @@ namespace GcnTools
             }
 
             // Inline Declarations
-            var inlines = Regex.Matches(stmt.options, @"(?<![a-z_0-9])(?<2>s|v)(?<3>1|2|4|8|16)(?<4>[fiub]) " +
+            var inlines = Regex.Matches(stmt.options, @"(?<![a-z_0-9])(?<2>s|v)(?<3>1|2|4|8|16)(?<4>[fiub])[\t\s]+" +
                 @"(?<5>(?<6>[a-z_][a-z_0-9]*)" +
                 @"( [a-z_][a-z_0-9]*(\[\d+(?::\d+)\])?)?)");
 
@@ -696,7 +701,7 @@ namespace GcnTools
                 stmt.opCode = Encoder.convertInstToBin(stmt.options, stmt.inst, log);
                 stmt.opSize = stmt.opCode.Size;
             }
-  
+
         }
     }
 }
