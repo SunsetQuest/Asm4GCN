@@ -9,8 +9,6 @@ namespace GcnTools
 {
     static class FriendlyConverter
     {
-
-
         public static string FriendlyFormatToAsmFormater(string stmtText, Variables vars, int ISA_Gen, Log log)
         {
             // find: v4u d = a + b ---> v_add_i32  v4u d, vcc, a, b 
@@ -142,7 +140,7 @@ namespace GcnTools
                     if (destSize == 2)
                     {
                         if (destType == 'i') // v2i = ??? + ???
-                            return "v_add_i16 " + declorationType + destName + "," + src0Name + "," + src1Name;
+                            return "v_add_i16 " + declorationType + destName + ", " + src0Name + ", " + src1Name;
                         else if (destType == 'u' || destType == 'b') // v2u = ??? + ???
                             return (ISA_Gen == 2 ? "v_add_i16 " : "v_add_u16 ") + declorationType + destName + ", " + src0Name + ", " + src1Name;
                         //return "v_add_u16 " + destName + "," + src0Name + "," + src1Name;
@@ -157,9 +155,9 @@ namespace GcnTools
                     else if (destSize == 4)
                     {
                         if (destType == 'i')
-                            return "v_add_i32 " + declorationType + destName + ", " + src0Name + ", " + src1Name;
+                            return "v_add_i32 " + declorationType + destName + ", vcc, " + src0Name + ", " + src1Name;
                         else if (destType == 'u' || destType == 'b')
-                            return (ISA_Gen == 2 ? "v_add_i32 " : "v_add_u32 ") + declorationType + destName + ", " + src0Name + ", " + src1Name;
+                            return (ISA_Gen == 2 ? "v_add_i32 " : "v_add_u32 ") + declorationType + destName + ", vcc, " + src0Name + ", " + src1Name;
                         else if (destType == 'f')
                             return "v_add_f32 " + declorationType + destName + ", " + src0Name + ", " + src1Name;
                         else

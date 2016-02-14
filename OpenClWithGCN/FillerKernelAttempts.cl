@@ -1,7 +1,7 @@
 
 // This file contains Filler Kernel Attempts.
 
-//The code below is not used in the program but it does show some different versions of a dummy kernels.
+// The code below is not used in the program but it does show some different versions of a dummy kernels.
 
 
 
@@ -351,3 +351,131 @@ void DummyFillerCode1( void *f0, void *f1, void *f2, void *f3, void *f4, void *f
 	output[i] =f0 + f1;
 };
 
+
+
+////////////////////////////////////////////////////////////////////
+#define VREG_CT 200
+#define SIZE_CT 27
+__attribute__((reqd_work_group_size(64,1,1)))
+__kernel void myAsmFunc(uint i0,uint i1)
+ { 
+	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
+	 union {uint i; uint u; float f; uint *up; float *fp;} x;
+	//float *f =  (float *)0x28ff44;
+	x.u = 0x789ABCDF;
+	//x.f= x.fp[0x789ABCDE];  							 // An ID for this kernel; 0- 1000
+
+	// Find inputs
+  x.u <<= i0;x.u <<= i1;
+
+	// Process VREG_CT
+	uint temp[VREG_CT];
+	for (int i = 0; i < VREG_CT; i++)
+		temp[i] = 0x789AC000 + i;
+	x.u ^= temp[x.u];	 
+
+	x.u &= 0x789AB000;  							 // An ID for this kernel; 0- 1000
+	x.u ^= get_local_id(1);
+	x.u &= get_global_id(0); 
+	x.u |= get_group_id(0); 
+
+	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
+
+
+	{
+		 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidently run this
+		
+		// Add to kernel's overall size
+		if(SIZE_CT>100)
+    {
+			float tmp = *(float*)&x;
+			#pragma unroll 
+			for(long i=0; i<SIZE_CT-100; i++)
+				tmp = rsqrt(tmp);
+			x.f = *(uint*)&tmp;
+     }
+	}
+
+	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
+	x.fp[0x0000FFFF] = x.f;
+};
+
+
+
+///////////////////////////////////////////////////////////////
+#define SREG_CT 4
+#define VREG1_CT 5
+#define VREG2_CT 5
+#define VREG4_CT 5
+#define VREG8_CT 5
+#define SIZE_CT 130
+
+void myAsmKernel000(float volatile i0, uint volatile i1, uint volatile i2 )
+{
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(255);
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+	int id = get_local_id(0) % 64;
+	//float *f =  (float *)0x28ff44;
+	volatile union {int i; uint u; float f; uint *up; float *fp;} x;
+	x.f = id; 
+	x.u ^= 15;  //ID for this kernel: -15 to 64
+	x.u ^= 20;  //some ID #2 (-15 to 64)
+	x.u ^= 30;  //some ID #3 (-15 to 64)
+
+	// Find inputs
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+  x.u ^= *(uint*)&i0 + 1; 
+	x.u ^= *(uint*)&i1 + 2;
+	x.u ^= *(uint*)&i2 + 3;
+    
+	// Process VREG_CT
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+	volatile uint  temp1[VREG1_CT]; 	for (int i = 0; i < VREG1_CT; i++) temp1[i] = i;
+	volatile uint2 temp2[VREG2_CT]; 	for (int i = 0; i < VREG2_CT; i++) temp2[i] = i;
+	volatile uint3 temp4[VREG4_CT]; 	for (int i = 0; i < VREG4_CT; i++) temp4[i] = i;
+	volatile long4 temp8[VREG8_CT]; 	for (int i = 0; i < VREG8_CT; i++) temp8[i] = i;
+		
+	x.u ^= temp1[x.u] + temp2[x.u].x + temp4[x.u].x + temp8[x.u].x;	 	 
+
+
+	// Process SREGS
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+if(SREG_CT>0)while(x.u+1)
+if(SREG_CT>1)while(x.u+2)
+if(SREG_CT>2)while(x.u+3)
+if(SREG_CT>3)while(x.u+4)
+if(SREG_CT>4)while(x.u+6)
+ x.u=rsqrt(x.f);
+
+
+	// Add to kernel's overall size
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+	if(SIZE_CT>100)
+			{
+		#pragma unroll 
+		for(long i=0; i<SIZE_CT-100; i++)
+			x.f = rsqrt(x.f);
+			}
+			
+	 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidentally run this				
+
+	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
+
+	//x.fp[0x0000FFFF] = x.f;
+}
+
+__kernel void myAsmFunc(__global float* f0, __global uint* i1, __global uint* i2 )
+{ 
+	float input0 = *f0;
+	uint input1 = *i1;
+	uint input2 = *i2 +111;
+	
+	myAsmKernel000(input0, input1, input2);
+}

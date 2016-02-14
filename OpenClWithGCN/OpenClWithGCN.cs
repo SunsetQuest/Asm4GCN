@@ -411,9 +411,10 @@ namespace OpenClWithGcnNS
             {
                 Version.Parse("13.251.9001.0"),
                 Version.Parse("14.501.1003.0"),
-                Version.Parse("15.200.1062.1004")
+                Version.Parse("15.200.1062.1004"),
+                Version.Parse("15.201.1151.0")
             };
-            const string recommend = "(Known working with 14.501.1003 or 15.200.1062)";
+            const string recommend = "(Known working are 14.501.1003, 15.200.1062 & 15.201.1151,)";
 
             StringBuilder msg = new StringBuilder();
             bool anyAmdGpuFound = false;

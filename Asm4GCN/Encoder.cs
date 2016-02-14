@@ -960,7 +960,7 @@ namespace GcnTools
                     argCt--;
                 }
                 else
-                    log.Warning("{0} should specify VCC as output param for clarity.", instr.name);
+                    log.Warning("{0} should specify VCC as output param for clarity.(E.g. v_add_i32 v4, vcc, v3, v2)", instr.name);
 
             if (argCt > instr.opCtMax)
             {
