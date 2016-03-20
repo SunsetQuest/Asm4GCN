@@ -108,14 +108,17 @@ namespace NOpenCL
                 gh = Array.ConvertAll(bins, b => GCHandle.Alloc(b, GCHandleType.Pinned));
                 IntPtr[] binaries = Array.ConvertAll(gh, h => h.AddrOfPinnedObject());
 
-                handle = clCreateProgramWithBinary(context, devCt, devices, lengths, binaries, binaryStatus, out errorCode);
+                //todo: had to put in a 1 for devCt. On systems with more then 1 device using 
+                //anything larger then 1 here fails so forcing 1 for now because at least it works.
+                //was: handle = clCreateProgramWithBinary(context, devCt, devices, lengths, binaries, binaryStatus, out errorCode);
+                handle = clCreateProgramWithBinary(context, 1, devices, lengths, binaries, binaryStatus, out errorCode);
             }
             finally
             {
                 for (int i = 0; i < gh.Length; i++)
                     gh[i].Free();
             }
-            
+
             ErrorHandler.ThrowOnFailure(errorCode);
 
             return handle;
@@ -330,9 +333,10 @@ namespace NOpenCL
             UIntPtr actualSize;
             try
             {
-                memory = Marshal.AllocHGlobal(IntPtr.Size);
-                ErrorHandler.ThrowOnFailure(clGetProgramInfo(program, 0x1165, (UIntPtr)UIntPtr.Size, memory, out actualSize));
-                IntPtr[] array = new IntPtr[1];
+                // Allicate space for up to 8 GPUs - I cannot see going over that in one system. 
+                memory = Marshal.AllocHGlobal(IntPtr.Size * 8);
+                ErrorHandler.ThrowOnFailure(clGetProgramInfo(program, 0x1165/*BinarySizes*/, (UIntPtr)(UIntPtr.Size * 8), memory, out actualSize));
+                IntPtr[] array = new IntPtr[(int)actualSize / IntPtr.Size];
                 Marshal.Copy(memory, array, 0, array.Length);
                 return Array.ConvertAll(array, p => (int)p);
             }
