@@ -406,15 +406,17 @@ namespace OpenClWithGcnNS
         /// <summary>Outputs some general GPU information in text format.</summary>
         public static string CheckGPUAndVersion()
         {
-            // Create a list of valid versions. The list must be sorted.
+            // Create a list of valid versions that have been tested. The list must be sorted.
             Version[] testedOK = new Version[]
             {
                 Version.Parse("13.251.9001.0"),
                 Version.Parse("14.501.1003.0"),
                 Version.Parse("15.200.1062.1004"),
-                Version.Parse("15.201.1151.0")
+                Version.Parse("15.201.1151.0"),
+                Version.Parse("15.300.1025.0"),
+                Version.Parse("16.150.2211.0"),
             };
-            const string recommend = "(Known working are 14.501.1003, 15.200.1062 & 15.201.1151,)";
+            const string recommend = " [Known working: 14.501.1003, 15.200.1062, 15.201.1151, 15.300.1025]";
 
             StringBuilder msg = new StringBuilder();
             bool anyAmdGpuFound = false;
@@ -433,7 +435,7 @@ namespace OpenClWithGcnNS
 
                     //////////////////// Lets check the Driver version /////////////////////////
                     string driverVer = mo.Properties["DriverVersion"].Value.ToString();
-                    Version driver = System.Version.Parse(driverVer);
+                    Version driver = Version.Parse(driverVer);
                     if (testedOK.Contains(driver))
                         msg.AppendFormat("INFO: AMD Driver version, {0}, has been verified as working.\r\n", driverVer);
                     else if ((from t in testedOK where t.Major == driver.Major && t.Minor == driver.Minor select t).Any())

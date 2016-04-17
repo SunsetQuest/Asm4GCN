@@ -31,9 +31,9 @@ namespace OpenClWithGcnNS
         /// <summary>A Program is a set of kernels, variables, functions, classes, and structures. It can be thought of as a text document that is compiled.  The whole document is compiled together.</summary>
         public Program program;
 
-        public byte[] dummyBin;  //future: should be byte[][] because we have many blocks
+        public byte[] dummyBin;  //future: should be byte[][] because we have many blocks //maybe move to AsmBlock also
 
-        public byte[] patchedBin;  //future: should be byte[][] because we have many blocks
+        public byte[] patchedBin;  //future: should be byte[][] because we have many blocks //maybe move to AsmBlock also
 
         public int deviceCt;
 

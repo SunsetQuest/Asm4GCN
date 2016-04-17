@@ -20,7 +20,6 @@ namespace Asm4GcnGUI
     public partial class frmMain : Form
     {
         OpenClWithGCN gcn = new OpenClWithGCN();
-
         bool changeSinceLastSave;
         string curFileName;
         string outputFolder = Path.GetTempPath() + "\\OpenCLwithGCNOutput";
@@ -52,7 +51,7 @@ namespace Asm4GcnGUI
                 File.Copy("NOpenCL.dll", outputFolder + "\\NOpenCL.dll", true);
 
             /////////////////// Setup AutoCompletes for GCN asm window  //////////////////////
-            autocompleteMenu1.MaximumSize = new System.Drawing.Size(700, 3000);
+            autocompleteMenu1.MaximumSize = new Size(700, 3000);
             var columnWidth = new int[] { 125, 575 };
 
             foreach (var i in GcnTools.ISA_DATA.ISA_Insts)
@@ -71,7 +70,7 @@ namespace Asm4GcnGUI
             );
 
             changeSinceLastSave = false;
-            this.Text = "Welcome to " + Application.ProductName;
+            Text = "Welcome to " + Application.ProductName;
         }
 
         /// <summary>
@@ -87,7 +86,7 @@ namespace Asm4GcnGUI
         {
             // lets first clear the output window so we can see the progress
             txtOutput.Clear();
-            this.Refresh(); //force txtOutput to update
+            Refresh(); //force txtOutput to update
             String exePathAndName = String.Format(@"{0}\{1}.exe", outputFolder, 
                 Path.GetFileNameWithoutExtension(curFileName ?? "Output"));
 
@@ -106,7 +105,7 @@ namespace Asm4GcnGUI
             }
         }
 
-        private bool Build(String exePathAndName)
+        private bool Build(string exePathAndName)
         {
             bool enableVSDebug = enableVisualStudioDebugToolStripMenuItem.Checked; // WARNING: Leaves temp files behind.
             if (enableVSDebug)
@@ -122,7 +121,7 @@ namespace Asm4GcnGUI
             if (success)
             {
                 var results = (new Microsoft.CSharp.CSharpCodeProvider()).CompileAssemblyFromSource(
-                new System.CodeDom.Compiler.CompilerParameters()
+                new CompilerParameters()
                 {
                     GenerateInMemory = true, // note: this is not really "in memory" 
                     GenerateExecutable = true,
@@ -148,7 +147,6 @@ namespace Asm4GcnGUI
                     txtOutput.AppendText("INFO: (no C# errors found in host code)\r\n");
 
                 results.TempFiles.Delete();
-
             }
 
             return success;
@@ -182,7 +180,7 @@ namespace Asm4GcnGUI
                 "\r\n///////// HOST ///////// (do not modify this line)\r\n" +
                 txtHost.Text );
             changeSinceLastSave = false;
-            this.Text = Path.GetFileName(fileName) + " - " + Application.ProductName;
+            Text = Path.GetFileName(fileName) + " - " + Application.ProductName;
         }
 
         private void LoadFromFile(string fileName)
@@ -192,7 +190,7 @@ namespace Asm4GcnGUI
             {
                 file = File.ReadAllText(openFileDialog1.FileName);
             }
-            catch (System.Exception other)
+            catch (Exception other)
             {
                 MessageBox.Show(other.Message);
                 return;
@@ -216,12 +214,12 @@ namespace Asm4GcnGUI
 
             changeSinceLastSave = false;
             curFileName = fileName;
-            this.Text = Path.GetFileName(curFileName) + " - " + Application.ProductName;
+            Text = Path.GetFileName(curFileName) + " - " + Application.ProductName;
         }
 
         private void tsSave_Click(object sender, EventArgs e)
         {
-            if (String.IsNullOrEmpty(curFileName))
+            if (string.IsNullOrEmpty(curFileName))
                 PromptAndSaveAs();
             else
                 SaveToFile(curFileName);
@@ -253,7 +251,7 @@ namespace Asm4GcnGUI
             txtHost.Text = resources.GetString("txtHost.Text");
             changeSinceLastSave = false;
             curFileName = null;
-            this.Text = Application.ProductName;
+            Text = Application.ProductName;
         }
 
         private void tsPrint_Click(object sender, EventArgs e)
@@ -387,7 +385,7 @@ namespace Asm4GcnGUI
 
 
             // if we are going from a unsaved state to saved state lets update the title
-            if (!changeSinceLastSave && !String.IsNullOrEmpty(curFileName))
+            if (!changeSinceLastSave && !string.IsNullOrEmpty(curFileName))
                 this.Text = Path.GetFileName(curFileName) + "(unsaved) - " + Application.ProductName;
             changeSinceLastSave = true;
         }
@@ -407,7 +405,7 @@ namespace Asm4GcnGUI
 
 
         MarkerStyle SameWordsStyle = new MarkerStyle(new SolidBrush(Color.FromArgb(40, Color.Gray)));
-        /// <summary>This function is used to highlight matching words from where the curser is at.</summary>
+        /// <summary>This function is used to highlight matching words from where the cursor is at.</summary>
         private void txtAsm_SelectionChangedDelayed(object sender, EventArgs e)
         {
             var fctb = sender as FastColoredTextBox;
@@ -443,14 +441,14 @@ namespace Asm4GcnGUI
             // source: http://support.microsoft.com/kb/305703 (Jan 2015)
             try
             {
-                System.Diagnostics.Process.Start("http://www.codeproject.com/Articles/872477/GCN-Assembler-for-AMD-GPUs");
+                Process.Start("http://www.codeproject.com/Articles/872477/GCN-Assembler-for-AMD-GPUs");
             }
-            catch (System.ComponentModel.Win32Exception noBrowser)
+            catch (Win32Exception noBrowser)
             {
                 if (noBrowser.ErrorCode == -2147467259)
                     MessageBox.Show(noBrowser.Message);
             }
-            catch (System.Exception other)
+            catch (Exception other)
             {
                 MessageBox.Show(other.Message);
             }
@@ -465,11 +463,17 @@ namespace Asm4GcnGUI
         {
             if (gcn.GcnCompile(txtAsm.Text))
             {
-                foreach (AsmBlock blk in gcn.env.asmBlocks)
+                using (FolderBrowserDialog browserDialog = new FolderBrowserDialog())
                 {
-                    string filename = "KernelBinary-" + blk.funcName + ".bin";
-                    txtOutput.Text = "Saving Bin to " + outputFolder + filename;
-                    File.WriteAllBytes(filename, blk.bin); // Requires System.IO
+                    if (browserDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        foreach (AsmBlock blk in gcn.env.asmBlocks)
+                        {
+                            string path = Path.Combine(browserDialog.SelectedPath, "KernelBinary-" + blk.funcName + ".bin");
+                            txtOutput.Text = "Saving Bin to " + path;
+                            File.WriteAllBytes(path, blk.bin);
+                        }
+                    }
                 }
             }
             else
@@ -508,8 +512,18 @@ namespace Asm4GcnGUI
         {
             if (gcn.GcnCompile(txtAsm.Text))
             {
-                txtOutput.Text = "INFO: Saving dummy bin to " + outputFolder + "\\DummyBinary.bin.";
-                File.WriteAllBytes("DummyBinary.bin", gcn.env.dummyBin); // Requires System.IO
+                using (FolderBrowserDialog browserDialog = new FolderBrowserDialog())
+                {
+                    if (browserDialog.ShowDialog() == DialogResult.OK)
+                    {
+                        //foreach (AsmBlock blk in gcn.env.asmBlocks) // for future
+                        {
+                            string path = Path.Combine(browserDialog.SelectedPath, "DummyBinary" /*+ blk.funcName*/ + ".bin");
+                            txtOutput.Text = "INFO: Saving dummy bin to " + path;
+                            File.WriteAllBytes(path, gcn.env.dummyBin);
+                        }
+                    }
+                }
             }
             else
             {
