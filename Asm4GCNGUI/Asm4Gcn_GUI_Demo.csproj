@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">x86</Platform>
-    <ProjectGuid>{3093D3A4-4400-4493-9E15-521FA74EAA80}</ProjectGuid>
+    <ProjectGuid>{15F843DD-3D87-4947-A01D-8C84CB32780A}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>Asm4GCNGUI</RootNamespace>

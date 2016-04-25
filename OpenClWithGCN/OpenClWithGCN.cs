@@ -10,7 +10,7 @@ using System.Text.RegularExpressions;
 using System.Collections.Generic;
 using GcnTools;
 using System.Text;
-using System.Management; // for ManagementObjectSearcher
+using System.Management;
 
 namespace OpenClWithGcnNS
 {
@@ -82,6 +82,7 @@ namespace OpenClWithGcnNS
             if (sw != null) log.AppendFormat("ReplaceAsm4GCNBlocksWithDummyKernel {0}ms ->", sw.ElapsedMilliseconds);
 
             /////////// Step: Create Program From OpenCl source with dummy kernels
+
             success = CreateBinaryFromOpenClSource(sourceWithDummyKernels, log);
             if (sw != null) log.AppendFormat("CreateBinaryFromOpenClSource {0}ms ->", sw.ElapsedMilliseconds);
             if (!success) { env.lastMessage = log.ToString() + "ERROR: CreateBinaryFromOpenClSource() failed"; return false; }
@@ -121,7 +122,7 @@ namespace OpenClWithGcnNS
             foreach (AsmBlock asmBlock in asmBlocks)
             {
                 // Modify Binaries as needed here
-                int start = ByteSearch(dummyBinary, new byte[] { 0xff, 0x02, 0x16, 0x7e, 0x00, 0xc0, 0x9a, 0x78, 0xff, 0x02 }, new byte[] { 0xFF, 0xFF, 0xFB, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0) - 0;
+                int start = ByteSearch(dummyBinary, new byte[] { 0xff, 0x02, 0x16, 0x7e, 0x00, 0xc0, 0x9a, 0x78, 0xff, 0x02 }, new byte[] { 0xFF, 0xFF, 0xF9, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }, 0) - 0;
 
                 // newer 14.501.1003.0 (11/20/2014): 02FF789AC0007E1602FF (rev: ff 02 16 7e 00 c0 9a 78 ff 02 18 7e 01 c0)
                 // older 13.251.9001.0 (4 /23/2014): 02FF789AC0007E1202FF (02 FF 78 9A C0 00 7E 12 02 ff)
@@ -187,7 +188,7 @@ namespace OpenClWithGcnNS
             foreach (AsmBlock blk in asmBlocks)
             {
                 sourceWithDummies.Append(source.Substring(cur, blk.locInSource - cur));
-                string dummyCode = BuildDummyKernel(blk.funcName, 100, blk.sRegUsage.Count(), blk.binSize / 4, blk.paramCt);
+                string dummyCode = BuildDummyKernel(blk.funcName, 100, blk.sRegUsage.Count(), blk.binSize / 4, blk.paramCt, blk.isLDSUsed);
                 sourceWithDummies.Append(dummyCode);
                 cur = blk.locInSource + blk.lenInSource;
             }
@@ -327,7 +328,7 @@ namespace OpenClWithGcnNS
                 GcnBlock Asm4GCN = new GcnBlock();
                 bool compileSuccessful;
                 blk.bin = Asm4GCN.CompileFull(srcLines, out blk.stms, out blk.sRegUsage, out blk.vRegUsage,
-                    out blk.binSize, out blk.compileLog, out compileSuccessful);
+                    out blk.binSize, out blk.isLDSUsed, out blk.compileLog, out compileSuccessful);
                 //blk.bin = Asm4GCN.CompileForBin(srcLines, out blk.stms, out blk.binSize, out blk.compileLog, out compileSuccessful);
                 success &= compileSuccessful;
 
@@ -336,7 +337,7 @@ namespace OpenClWithGcnNS
             return success;
         }
 
-        string BuildDummyKernel(string funcName, int vRegCt, int sRegCt, int codeSize, int paramCt)
+        string BuildDummyKernel(string funcName, int vRegCt, int sRegCt, int codeSize, int paramCt, bool isLDSUsed)
         {
             vRegCt = Math.Max(vRegCt, 15); // 15 minimum so v_mov_b32 is on top
             StringBuilder programSource = new StringBuilder();
@@ -393,8 +394,17 @@ namespace OpenClWithGcnNS
 			x.f = *(uint*)&tmp;
         }
 	}
-	 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidentally run this
+	 if (x.u < 0xFFFFFFF0) return; // prevents hang in case we accidentally run this");
 
+            if (isLDSUsed)
+                programSource.AppendLine(@"	
+    // Use shared memory
+    int lid = get_local_id(1);
+	__local float smem[256];
+	smem[lid] = (float) (lid << 17);
+    x.f += smem[lid % 8];");
+
+            programSource.AppendLine(@"	
 	mem_fence(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
 
 	x.fp[0x0000FFFF] = x.f;
@@ -416,7 +426,7 @@ namespace OpenClWithGcnNS
                 Version.Parse("15.300.1025.0"),
                 Version.Parse("16.150.2211.0"),
             };
-            const string recommend = " [Known working: 14.501.1003, 15.200.1062, 15.201.1151, 15.300.1025]";
+            const string recommend = " [Known working: 15.200.1062, 15.201.1151, 15.300.1025, 16.150.2211]";
 
             StringBuilder msg = new StringBuilder();
             bool anyAmdGpuFound = false;
@@ -451,7 +461,7 @@ namespace OpenClWithGcnNS
                     if (Regex.Match(desc,
                         @"((AMD|ASUS)\s+Radeon\s*(\(TM\))?\s*(HD|R7|R9|)\s*(7[789]\d|818|821|825|824|828|833|837|847|857|867|840|857|867|876|877|886|895|897|899|855|857|859|867|869|873|875|877|879|883|885|887|889|893|895|897|899)0[MDG]?(\s.*)?)" +
                         @"|((AMD|ASUS)\s+(Radeon|R7|R9)\s*?(\(TM\))?\s*?(R[79])?\s+(2[0456789][05]X?)\s.*)" +
-                        @"||((AMD|ASUS)\s+Firepro\s*?(\(TM\))?\s*?M(40|41|51|60)00\s.*)").Success)
+                        @"|((AMD|ASUS)\s+Firepro\s*?(\(TM\))?\s*?M(40|41|51|60)00\s.*)").Success)
                     {
                         msg.AppendLine("INFO: Found GPU with GCN - " + desc);
                     }
@@ -467,7 +477,7 @@ namespace OpenClWithGcnNS
                     }
                     else
                     {
-                        msg.AppendLine("WARN: AMD GPU Found: (unknown if GPU supports GCN) " + desc);
+                        msg.AppendLine("WARN: AMD GPU Found: (unknown if GPU supports GCN 1.0 or 1.1) " + desc);
                     }
 
                 }

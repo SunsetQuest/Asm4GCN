@@ -86,8 +86,15 @@ to re-use.
   - Refactored: Cleaned up GcnBlock.cs. Separated CleanupComments, processDefines, and processSingleStmt
 
 - November 9 2015
-  - New: Added a friendly sytax feature so that asm statements can be entered in a more readable format.  Example: "v_add_i32 localSizeIdx, vcc, laneId, vLocalSize" can now be added like "localSizeIdx = laneId + vLocalSize". It is easier to read. It is only supported on +,-,*,>>,<<.
+  - New: Added a friendly syntax feature so that asm statements can be entered in a more readable format.  Example: "v_add_i32 localSizeIdx, vcc, laneId, vLocalSize" can now be added like "localSizeIdx = laneId + vLocalSize". It is easier to read. It is only supported on +,-,*,>>,<<.
   - Refactor: Pulled out some of the Regular Expressions to their own file. This will be expanded on in the future.
+
+- Jan - April 2016 
+  - Update; Added prompt for kernel export.
+  - Update: Added driver versions 15.300 and 16.150 to acceptable list; code cleanup.
+  - Fix: Asm4GCN would fail if there was more than one AMD GCN GPU. It will now work but Asm4GCN will not work with both GPUs without adjustment
+  - Update: Added a support for a newer driver version; add a "vcc" for the friendly converter for "+"
+  - Fix: Corrected opcode for DS_WRITE_SRC2_B32=141 and DS_WRITE_SRC2_B64=205 (Thank you to Mateusz Szpakowski for finding that and correcting it.)
 
 ###To-Do / Broken
 - cannot re-use the same variable name (maybe move these to a list under itself)

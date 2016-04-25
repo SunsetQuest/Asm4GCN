@@ -31,7 +31,7 @@ namespace GcnTools
         /// Compiles for both specifications and binary output. 
         /// </summary>
         public byte[] CompileFull(string[] srcLines, out List<Stmt> _gcnStmts, out List<RegUsage> sRegUsage,
-            out List<RegUsage> vRegUsage, out int binSize, out string logOutput, out bool compileSuccessful)
+            out List<RegUsage> vRegUsage, out int binSize, out bool isLDSUsed, out string logOutput, out bool compileSuccessful)
         {
             Log log = new Log();
             vars = new Variables(UseRegPool: true, CalcRegUsage: true, log: log);
@@ -42,8 +42,10 @@ namespace GcnTools
 
             sRegUsage = vars.sRegUsageCalc.GetUsage();
             vRegUsage = vars.vRegUsageCalc.GetUsage();
+            isLDSUsed = gcnStmts.Any(s => s.inst.encoding == ISA_Enc.DS || s.inst.encoding == ISA_Enc.DS2);
             logOutput = log.ToString();
             compileSuccessful = !log.hasErrors;
+
             return bin;
         }
 

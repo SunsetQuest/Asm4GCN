@@ -1,1 +1,0 @@
-Version history is not stored in the README.md file.

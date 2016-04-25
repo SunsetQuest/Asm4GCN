@@ -89,17 +89,24 @@ namespace GcnTools
 
             int num;
             if (opType > '0' && opType <= '9')
+            {
                 num = Int32.Parse(opVal, NumberStyles.AllowLeadingSign | NumberStyles.AllowExponent);
+                if (num > ((1 << maxBitSize - 1) - 1))
+                    log.Error("param {0}: The value '{1}' will not fit in {2} bits", paramNo, val, maxBitSize);
+
+                if (num < -(1 << maxBitSize))
+                    log.Error("param {0}: The value '{1}' will not fit in {2} bits", paramNo, val, maxBitSize);
+            }
             else // if (opType == 'x' || opType == 'o' || opType == 'b')
+            {
                 num = Convert.ToInt32(opVal, (opType == 'x') ? 16 : (opType == 'o') ? 8 : 2);
 
-            if (num > ((1 << maxBitSize - 1) - 1))
-                log.Error("param {0}: The value '{1}' will not fit in {2} bits", paramNo, val, maxBitSize);
+                if (num >= (1 << maxBitSize))
+                    log.Error("param {0}: The value '{1}' will not fit in {2} bits", paramNo, val, maxBitSize);
+            }
 
-            if (num < -(1 << maxBitSize))
-                log.Error("param {0}: The value '{1}' will not fit in {2} bits", paramNo, val, maxBitSize);
 
-            int mask = ((1 << maxBitSize) - 1);
+        int mask = ((1 << maxBitSize) - 1);
 
             return (uint)(num & mask); //returned as uint for b32
         }
@@ -243,31 +250,46 @@ namespace GcnTools
         internal static uint parseOnlyVGPR(string val, int paramNo, Log log)
         {
             uint numVal;
+            tryParseOnlyVGPR(out numVal, val, paramNo, log);
+            return numVal;
+        }
+
+
+        internal static bool tryParseOnlyVGPR(out uint regNum, string val, int paramNo, Log log)
+        {
+            regNum = 0;
 
             // lets try and resolve any aliases
             OpInfo opInfo;
             if (ISA_DATA.sRegAliases.TryGetValue(val, out opInfo))
             {
                 if (!opInfo.flags.HasFlag(OpType.VGPR))
+                {
                     log.Error("param {0}: The dataType '{1}' is not allowed here. Only VGPRs are allowed.", paramNo, opInfo.flags);
-                numVal = opInfo.reg & 0xFF; //should only be between 0-255 (not 256-511)
+                    return false;
+                }
+                regNum = opInfo.reg & 0xFF; //should only be between 0-255 (not 256-511)
             }
             else
             {
-                Match m = Regex.Match(val, @"(?ix)"+
-                    @"(?:v(?<1>\d+))"+            // vector register in s# format
+                Match m = Regex.Match(val, @"(?ix)" +
+                    @"(?:v(?<1>\d+))" +            // vector register in s# format
                     @"|(?:v\[(?<1>\d+):\d+\])");  // vector register in s[#:#] format
 
-
-                if (!UInt32.TryParse(m.Groups[1].Value, out numVal))
+                if (!UInt32.TryParse(m.Groups[1].Value, out regNum))
+                {
                     log.Error("param {0}: '{1}' must be a VGPR or alias", paramNo, val);
+                    return false;
+                }
 
-
-                if (numVal > 255)
+                if (regNum > 255)
+                {
                     log.Error("param {0}: unable to use VGPRs greater then 255.", paramNo);
+                    return false;
+                }
             }
 
-            return numVal;
+            return true;
         }
 
         internal static uint parseOnlySGPR(string val, int paramNo, Log log, OpType allowedTypesFlag = OpType.SCALAR_DST)

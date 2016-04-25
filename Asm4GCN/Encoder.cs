@@ -31,6 +31,7 @@ namespace GcnTools
             switch (inst.encoding)
             {
                 case ISA_Enc.DS: opcode = encodeDS(inst, options, log1); break;
+                case ISA_Enc.DS2: opcode = encodeDS2(inst, options, log1); break;
                 case ISA_Enc.EXP: opcode = encodeEXP(inst, options, log1);  break;
                 case ISA_Enc.FLAT: opcode = encodeFLAT(inst, options, log1); break;
                 case ISA_Enc.MIMG: opcode = encodeMIMG(inst, options, log1); break;
@@ -89,7 +90,7 @@ namespace GcnTools
         }
 
         /// <summary>
-        /// DS encoding format 
+        /// DS encoding format (for single operations)
         /// |ENCODE(6)-26|--OP(8)-18--|GDS(1)-17|reserved(1)-16|OFFSET1(8)-8|OFFSET0(8)-0|
         /// |VDST(8)-56|DATA1(8)-48|DATA0(8)-40|ADDR(8)-32|
         /// </summary>
@@ -97,60 +98,113 @@ namespace GcnTools
         {
 	        string[] args = Regex.Split(options, @"\s*[,\s]\s*");
 	        
-            OpCode op_code = new OpCode{code = instr.opCode};
+            OpCode op_code = new OpCode{code = instr.opCode, literal = 0};
 
             if (instr.name == "ds_nop")
             {
                 if (args.Length > 1 || args[0] != "")
                     log.Warning("ds_nop does not support any options");
-                op_code.code = instr.opCode;
-                op_code.literal = 0;
+                //op_code.code = instr.opCode;
+                //op_code.literal = 0;
                 return op_code;
             }
-            if (args.Length < 4)
+            if (args.Length < 2)
             {
                 log.Error("number of passed operands is too low");
                 return op_code;
             }
 
             // Setup arguments
-            
-            string vdst_str	= args[0];
-	        string addr_str	= args[1];
-	        string data0_str= args[2];
-	        string data1_str= args[3];
-	       
+            uint vdst_val = ParseOperand.parseOnlyVGPR(args[0], 1, log); //dest
+            uint addr_op = ParseOperand.parseOnlyVGPR(args[1], 2, log);  //addr
 
-
-
-	        // Parse optional parameters
-	        for (int i = 4; i < args.Length; i++)
+            // Parse optional parameters
+            for (int i = 2; i < args.Length; i++)
 	        {
-		        if (args[i]== "gds")
+                uint dataAddr = 0;
+
+                if (args[i]== "gds")
 			        op_code.code |= (1 << 17);
 		        else if (args[i].StartsWith("offset"))
 		        {
+                    Match m = Regex.Match(args[i], @"offset(0?):([0-9a-fxo]+)$");
+                    uint val = 0;
+                    if (m.Success)
+                        val = ParseOperand.parseUnSignedNumber(m.Groups[2].Value, 16, i, log); //hack: sometimes this is 8 bits(not 16)
+                    else
+                        log.Error("incorrect offset format, examples: offset0:123 or offset:123");
+
+                    op_code.code |= val;
+		        }
+                else if (ParseOperand.tryParseOnlyVGPR(out dataAddr, args[i], i, log)) // VGPR that supplies the data0 source.
+                {
+                    op_code.literal = dataAddr << 8;
+                }
+                else
+                    log.Error("unknown param for DS instruction", args[i]);
+            }
+
+            op_code.literal |= addr_op | vdst_val << 24;
+
+            return op_code;
+        }
+
+        /// <summary>
+        /// DS encoding format (for dual operations)  
+        /// |ENCODE(6)-26|--OP(8)-18--|GDS(1)-17|reserved(1)-16|OFFSET1(8)-8|OFFSET0(8)-0|
+        /// |VDST(8)-56|DATA1(8)-48|DATA0(8)-40|ADDR(8)-32|
+        /// </summary>
+        private static OpCode encodeDS2(InstInfo instr, string options, Log log)
+        {
+            string[] args = Regex.Split(options, @"\s*[,\s]\s*");
+
+            OpCode op_code = new OpCode { code = instr.opCode, literal = 0 };
+
+            if (args.Length < 3)
+            {
+                log.Error("The number of passed operands is too low. offset0/offset1 should be used.");
+                return op_code;
+            }
+
+            // Setup arguments
+            string vdst_str = args[0];
+            string addr_str = args[1];
+
+            // Parse optional parameters
+            uint data_op = 0;
+            for (int i = 4; i < args.Length; i++)
+            {
+                uint dataAddr = 0;
+                if (args[i] == "gds")
+                    op_code.code |= (1 << 17);
+                else if (args[i].StartsWith("offset"))
+                {
                     Match m = Regex.Match(args[i], @"offset(0|1):([0-9a-fxo]+)$");
                     uint val = 0;
                     if (m.Success)
                         val = ParseOperand.parseUnSignedNumber(m.Groups[2].Value, 16, i, log); //hack: sometimes this is 8 bits(not 16)
                     else
-                        log.Error("incorrect offset format - example OFFSET0:123");
+                        log.Error("incorrect offset format, examples: offset0:123 or offset:123");
 
-                    op_code.code |= val << (m.Groups[1].Value == "0" ? 0 : 8);
-		        }
-	        }
+                    op_code.code |= val << (m.Groups[1].Value == "1" ? 8 : 0);
+                }
+                else if (ParseOperand.tryParseOnlyVGPR(out dataAddr, args[i], i, log)) // VGPR that supplies the data0/data1 source.
+                {
+                    data_op <<= 8;
+                    data_op |= dataAddr;
+                }
+                else
+                    log.Error("unknown param for DS instruction", args[i]);
+            }
 
             uint vdst_val = ParseOperand.parseOnlyVGPR(vdst_str, 1, log);
             uint addr_op = ParseOperand.parseOnlyVGPR(addr_str, 2, log);
-            uint data0_op = ParseOperand.parseOnlyVGPR(data0_str, 3, log);
-            uint data1_op = ParseOperand.parseOnlyVGPR(data1_str, 4, log);
 
-            op_code.literal = addr_op | data0_op << 8 | data1_op << 16 | vdst_val << 24;
+            op_code.literal |= addr_op | data_op | vdst_val << 24;
 
             return op_code;
         }
-        
+
         /// <summary>
         /// EXP encoding format 
         /// |ENCODING(6)-26|reserved(13)-13|VM(1)-12|DONE(1)-11|COMPR(1)-10|TGT(6)-4|EN(int,4)-0|
@@ -318,7 +372,7 @@ namespace GcnTools
         /// </summary>
         private static OpCode encodeBUF(ref InstInfo instr, string options, Log log, out Match m)
         {
-            m = Regex.Match(options, @"^(?<VDATA>.*?)\s*,\s*(?<VADDR>.*?)\s*,\s*(?<SRSRC>.*?)\s*,\s*(?<SOFFSET>.*?)"
+            m = Regex.Match(options, @"^(?<VDATA>.*?)\s*,\s*(?<VADDR>.*?)\s*,\s*(?<SRSRC>.*?)(\s*,\s*(?<SOFFSET>.*?))?"
                 +@"(?:[\s,]+(?:(?<ADDR64>addr64)|(?<GLC>glc)|(?<IDXEN>idxen)|(format:\[(?<FORMAT>.*?)\])|"
                 +@"(?<OFFEN>offen)|(?<SLC>slc)|(?<TFE>tfe)|(?:(?:offset:)?(?<OFFSET>(?:0x)?[0-9a-f]+))|(?<UNKNOWN>.*?)))*$");
 
@@ -338,7 +392,9 @@ namespace GcnTools
                 log.Warning("SRSRC should be aligned by 4");
             srsrc_op >>= 2;                                         // This field is missing 2 bits from LSB
 
-            uint soffset_op = ParseOperand.parseOnlySGPR(m.Groups["SOFFSET"].Value, 4, log, OpType.SGPR | OpType.M0 | OpType.INLINE);
+            uint soffset_op = m.Groups["SOFFSET"].Success ? 
+                ParseOperand.parseOnlySGPR(m.Groups["SOFFSET"].Value, 4, log, OpType.SGPR | OpType.M0 | OpType.INLINE)
+                : 0;
 
             op_code.literal = vaddr_op | vdata_op << 8 | srsrc_op << 16 | soffset_op << 24 | ParseOperand.setBitOnFound(m, "SLC", 22, "TFE", 23);
 
@@ -698,10 +754,10 @@ namespace GcnTools
                 return op_code;
             }
 
-            uint immd = ParseOperand.parseSignedNumber(args[0], 16, 2, log);
+            uint sdst = ParseOperand.parseOperand(args[0], OpType.SCALAR_DST, 1, log).reg;
 
-            uint sdst = ParseOperand.parseOperand(args[1], OpType.SCALAR_DST, 1, log).reg;
-
+            uint immd = ParseOperand.parseSignedNumber(args[1], 16, 2, log);
+            
             op_code.code |= (sdst << 16) | immd;
 
             return op_code;
@@ -1383,13 +1439,22 @@ namespace GcnTools
             OpCode op_code = new OpCode { code = instr.opCode};
 
             string[] args = Regex.Split(options, @"\s*[,\s]\s*");
-
-            if (args.Length != 2)
+            
+            if (args[0] == "vcc")
             {
-                log.Error("VOPC instructions should have two arguments.");
+                if (args.Length != 3)
+                {
+                    log.Error("When using a leading vcc, there should on a VOPC instructions there should be two arguments.");
+                    return op_code;
+                }
+                args[0] = args[1];
+                args[1] = args[2];
+            }
+            else if (args.Length != 2)
+            {
+                log.Error("VOPC instructions should have two items to compare.");
                 return op_code;
             }
-
 
             OpInfo vsrc0 = ParseOperand.parseOperand(args[0], OpType.ALL, 1, log);
             if (vsrc0.flags.HasFlag(OpType.LITERAL))

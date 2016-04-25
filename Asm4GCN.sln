@@ -1,14 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
-VisualStudioVersion = 14.0.23107.0
+VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asm4GCN", "Asm4GCN\Asm4GCN.csproj", "{C72C7A09-D424-489A-A5B3-BAD01013FB67}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asm4Gcn_GUI_Demo", "Asm4GCNGUI\Asm4Gcn_GUI_Demo.csproj", "{15F843DD-3D87-4947-A01D-8C84CB32780A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asm4GcnGUI", "Asm4GCNGUI\Asm4GcnGUI.csproj", "{3093D3A4-4400-4493-9E15-521FA74EAA80}"
-	ProjectSection(ProjectDependencies) = postProject
-		{D334360A-7FC7-4824-A024-071837CC53B1} = {D334360A-7FC7-4824-A024-071837CC53B1}
-	EndProjectSection
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Asm4GCN", "Asm4GCN\Asm4GCN.csproj", "{C72C7A09-D424-489A-A5B3-BAD01013FB67}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenClWithGCN", "OpenClWithGCN\OpenClWithGCN.csproj", "{D334360A-7FC7-4824-A024-071837CC53B1}"
 EndProject
@@ -29,6 +26,21 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|Any CPU.Build.0 = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|Mixed Platforms.Build.0 = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|x86.ActiveCfg = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Debug|x86.Build.0 = Debug|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Publish|Any CPU.ActiveCfg = Publish|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Publish|Mixed Platforms.ActiveCfg = Publish|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Publish|Mixed Platforms.Build.0 = Publish|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Publish|x86.ActiveCfg = Publish|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Publish|x86.Build.0 = Publish|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Release|Any CPU.ActiveCfg = Release|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Release|Mixed Platforms.ActiveCfg = Release|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Release|Mixed Platforms.Build.0 = Release|x86
+		{15F843DD-3D87-4947-A01D-8C84CB32780A}.Release|x86.ActiveCfg = Release|x86
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Debug|Any CPU.Build.0 = Debug|x86
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
@@ -46,23 +58,6 @@ Global
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Release|Mixed Platforms.Build.0 = Release|x86
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Release|x86.ActiveCfg = Release|x86
 		{C72C7A09-D424-489A-A5B3-BAD01013FB67}.Release|x86.Build.0 = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|Any CPU.ActiveCfg = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|Any CPU.Build.0 = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|Mixed Platforms.ActiveCfg = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|Mixed Platforms.Build.0 = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|x86.ActiveCfg = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Debug|x86.Build.0 = Debug|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Publish|Any CPU.ActiveCfg = Publish|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Publish|Mixed Platforms.ActiveCfg = Publish|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Publish|Mixed Platforms.Build.0 = Publish|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Publish|x86.ActiveCfg = Publish|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Publish|x86.Build.0 = Publish|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|Any CPU.ActiveCfg = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|Any CPU.Build.0 = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|Mixed Platforms.ActiveCfg = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|Mixed Platforms.Build.0 = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|x86.ActiveCfg = Release|x86
-		{3093D3A4-4400-4493-9E15-521FA74EAA80}.Release|x86.Build.0 = Release|x86
 		{D334360A-7FC7-4824-A024-071837CC53B1}.Debug|Any CPU.ActiveCfg = Debug|x86
 		{D334360A-7FC7-4824-A024-071837CC53B1}.Debug|Any CPU.Build.0 = Debug|x86
 		{D334360A-7FC7-4824-A024-071837CC53B1}.Debug|Mixed Platforms.ActiveCfg = Debug|x86

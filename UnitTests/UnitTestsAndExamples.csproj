@@ -57,6 +57,7 @@
   </Choose>
   <ItemGroup>
     <Compile Include="FriendlyStatements.cs" />
+    <Compile Include="SharedMemory.cs" />
     <Compile Include="TestCachedPrograms.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="FastWavefrontReductions.cs" />

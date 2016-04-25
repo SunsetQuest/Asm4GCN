@@ -110,5 +110,8 @@ namespace OpenClWithGcnNS
 
         /// <summary>Count the number of lines in the header so the error-line-# reports correctly.</summary>
         public int newlineCtInHeader;
+
+        /// <summary>Indicates if LDS memory is used.</summary>
+        public bool isLDSUsed = true;  //todo: set this by checking for ds_ instructions
     }
 }

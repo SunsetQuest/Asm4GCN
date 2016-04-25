@@ -8,13 +8,13 @@ namespace UnitTests
     {
         static void Main(string[] args)
         {
+            (new DoubleValueUsingOpenCL()).Run();
             (new DoubleValueUsingRegs()).Run();
             (new DoubleValueUsingVars()).Run();
-            (new DoubleValueUsingOpenCL()).Run();
             (new FastWavefrontReductions()).Run();
-            (new TestCachedPrograms()).Run();
             (new FriendlyStatements()).Run();
-
+            (new SharedMemory()).Run();
+            (new TestCachedPrograms()).Run();
             Console.ReadKey();
         }
     }
